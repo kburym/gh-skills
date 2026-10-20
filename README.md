@@ -4,7 +4,10 @@
 [![Skills](https://img.shields.io/badge/skills-12-blue)](skills)
 [![Agent Skills](https://img.shields.io/badge/spec-agentskills.io-green)](https://agentskills.io/specification)
 [![skills.sh](https://skills.sh/b/odykyi/gh-skills)](https://skills.sh/odykyi/gh-skills)
+[![installs](https://skills.sh/b/odykyi/gh-skills?label=installs)](https://skills.sh/odykyi/gh-skills)
 [![Stars](https://img.shields.io/github/stars/odykyi/gh-skills?style=flat-square&label=stars)](https://github.com/odykyi/gh-skills)
+[![Forks](https://img.shields.io/github/forks/odykyi/gh-skills?style=flat-square&label=forks)](https://github.com/odykyi/gh-skills/fork)
+[![Last commit](https://img.shields.io/github/last-commit/odykyi/gh-skills?style=flat-square)](https://github.com/odykyi/gh-skills/commits/main)
 
 **GitHub automation skills for AI coding agents** — the full pull request lifecycle, labelling, projects, and issue-to-PR flow.
 
@@ -24,6 +27,9 @@ Every skill is a self-contained folder with a `SKILL.md` (plus optional `referen
     <td align="center" valign="middle"><a href="#install"><img src="https://img.shields.io/badge/npx_skills_add-24292F?style=for-the-badge&logo=gnometerminal&logoColor=white" alt="Install with Terminal" height="32"></a></td>
   </tr>
 </table>
+
+Not installing? You can also [star it, fork it, take a single skill, or host your
+own marketplace](#use-it-your-way).
 
 ### Ask an AI about this repo
 
@@ -301,6 +307,30 @@ worktree and the local branch.
 - Some skills reference companion issue-side skills (`issue-labeler`, `issue-reporter`, `issue-to-pr`). Those are not part of this collection.
 - `pr-manager` scales to 20+ concurrent PRs by dispatching parallel subagents (opencode parallel sub-sessions). It has been exercised that way; the per-PR workflow itself is the same one `pr-workflow-orchestrator` runs for a single PR.
 - `gh-pr-review-buttons` is derived from [`tdk-landscape/tdk-skills`](https://github.com/tdk-landscape/tdk-skills/tree/main/skills/tdk-pr-review-buttons) (MIT).
+- The `skills.sh` and `installs` badges at the top are live counters served by skills.sh. They render as a placeholder until skills.sh has indexed this repository — the count is the number of times the collection has been installed through `npx skills add`.
+
+## Use it your way
+
+Not everyone installs a collection, and not everyone should. Everything here is
+MIT-licensed text — take the form of it that fits your setup.
+
+| If you want to… | Do this |
+|------------------|---------|
+| ⭐ **Star it** | Costs nothing and it is the cheapest way to help. Stars are how the next maintainer finds this, how skills.sh ranks it, and how the repo gets a pulse. |
+| 🍴 **Fork it** | Make it yours: rename skills, swap the label defaults for your repo's, add your own conventions, delete what you do not need. The validator keeps your fork honest. |
+| 📦 **Install all 12** | `npx skills add odykyi/gh-skills`, the plugin marketplace, or `install.sh`. |
+| 🧩 **Take just one skill** | Copy `skills/pr-merger/` — or any other folder — into your project. Every skill is self-contained and works on its own. |
+| 🏪 **Host your own marketplace** | Point a `marketplace.json` at your fork and run `/plugin marketplace add <owner>/<repo>`. |
+| 📐 **Adopt the rules only** | Copy [`rules/AGENTS.github.md`](./rules/AGENTS.github.md) into your repo as `AGENTS.md`. The agent learns *your* conventions — no skills required. |
+| ✍️ **Contribute a skill** | `template/SKILL.md` → `skills/<name>/` → `node scripts/validate-skills.mjs` → open a PR. See [`CONTRIBUTING.md`](./CONTRIBUTING.md). |
+| 🐛 **Report a broken command** | Open an issue with the exact command and the exact error. This is the most valuable contribution there is — the whole linter exists because of bugs like that. |
+| 🔀 **Run it inside your org** | Fork it, point it at your internal label set and path mappings, host the marketplace on your own infrastructure. |
+| 📖 **Read it first** | [`SPEC.md`](./SPEC.md) is the contract — eight invariants, one page. Then `docs/creating-skills.md` if you want to add one. |
+| 🎨 **Reuse the diagram** | `assets/*.dot` are Graphviz sources. Rebuild them, restyle them, drop them in your own docs. |
+
+Prefer not to touch GitHub at all? The skills are plain markdown — read them,
+copy the parts you like, and run the commands yourself. There is no dependency
+on this repository at runtime.
 
 ## Contributing
 
