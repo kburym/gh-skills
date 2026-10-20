@@ -37,15 +37,14 @@ Use this skill when:
 | **PR merged** | ✅ **DONE** | **YES** |
 
 **Success Criteria**:
-1. ✅ PR shows as **MERGED** on GitHub
-2. ✅ Merge commit exists on main branch
-3. ✅ Code is in production path
+1. ✅ PR shows as **MERGED** on GitHub (`gh pr view <number> --json state`)
+2. ✅ The merge commit is present on the base branch
 
 ## Prerequisites
 
 Before merging, verify ALL of:
 - [ ] PR has approval review
-- [ ] CI checks passing (or explicitly bypassed)
+- [ ] CI checks passing (required — `gh pr merge` fails if required checks are not green; do NOT use `--admin` to bypass)
 - [ ] No merge conflicts with base branch
 - [ ] Branch is up to date with main
 - [ ] Worktree exists and is clean
@@ -59,12 +58,17 @@ Before merging, verify ALL of:
 ```
 
 **Workflow**:
-1. Verify PR status (approved, CI passing)
-2. Check for conflicts
-3. Update branch if behind main
-4. Merge with squash (default)
-5. Verify merge
-6. Clean up worktree and branch
+1. Verify PR state — STOP if any check fails:
+   ```bash
+   gh pr view <number> --json state,isDraft,reviewDecision,mergeable,mergeStateStatus,statusCheckRollup
+   ```
+   Require: `state == OPEN`, `isDraft == false`, `reviewDecision == APPROVED`, `mergeable == MERGEABLE`, and every entry in `statusCheckRollup` in `SUCCESS`/`SKIPPED`/`NEUTRAL`.
+2. Check for conflicts — `mergeable != MERGEABLE` → go to Conflict Resolution below
+3. Update branch if behind — `gh pr update-branch <number>`
+4. Merge — `gh pr merge <number> --squash --delete-branch`
+   Use the repository's configured default strategy (usually squash); confirm with the user if the branch is long-lived.
+5. Verify merge — `gh pr view <number> --json state` must be `MERGED`
+6. Clean up worktree and branch (Cleanup Process below)
 
 ### 2. Batch Merge
 
@@ -82,9 +86,11 @@ Before merging, verify ALL of:
 
 | Strategy | Command | Best For |
 |----------|---------|----------|
-| **Squash** | `gh pr merge <n> --squash --delete-branch=true` | Feature branches with many commits |
-| **Merge** | `gh pr merge <n> --merge --delete-branch=true` | Long-lived branches |
-| **Rebase** | `gh pr merge <n> --rebase --delete-branch=true` | Clean linear history |
+| **Squash** | `gh pr merge <n> --squash` | Feature branches with many commits |
+| **Merge** | `gh pr merge <n> --merge` | Long-lived branches |
+| **Rebase** | `gh pr merge <n> --rebase` | Clean linear history |
+
+Add `--delete-branch` only after the merge is verified and cleanup has succeeded.
 
 ## Cleanup Process
 
@@ -94,25 +100,33 @@ Before merging, verify ALL of:
 # Get branch name
 branch_name=$(gh pr view <pr-number> --json headRefName -q .headRefName)
 
-# Find worktree path
+# Find worktree path (the "worktree <path>" line is 2 lines above the branch line)
 worktree_path=$(git worktree list --porcelain | \
-  grep -B1 "branch refs/heads/$branch_name" | head -1 | sed 's/worktree //')
+  grep -B2 "branch refs/heads/$branch_name" | head -1 | sed 's/^worktree //')
 
-# Remove worktree
+# Remove worktree (only if clean; never --force)
 if [ -n "$worktree_path" ]; then
-  git worktree remove "$worktree_path" 2>/dev/null || \
-    git worktree remove --force "$worktree_path"
+  if [ -n "$(git -C "$worktree_path" status --porcelain)" ]; then
+    echo "Worktree $worktree_path has uncommitted changes — NOT removing. Report and stop."
+  else
+    git worktree remove "$worktree_path"
+  fi
 fi
 ```
 
 ### Branch Cleanup
 
 ```bash
-# Switch to main
-git checkout main 2>/dev/null || git checkout master 2>/dev/null
+# Ensure we are not on the branch being deleted
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main)
+git switch "$default_branch" 2>/dev/null || git checkout "$default_branch" 2>/dev/null || git switch main 2>/dev/null || true
 
-# Delete local branch
-git branch -D "$branch_name" 2>/dev/null || true
+# Delete local branch (safe: refuses if not merged)
+git branch -d "$branch_name" || {
+  echo "Local branch not fully merged — keeping it. Review with: git log origin/main..$branch_name"
+}
 
 # Prune remote references
 git fetch --prune origin 2>/dev/null || true
@@ -121,11 +135,22 @@ git fetch --prune origin 2>/dev/null || true
 ## Conflict Resolution
 
 ### Auto-Resolve (Simple Cases)
-
-For conflicts in `package.json`, `CHANGELOG`, `VERSION`:
+Only for text-only conflicts where the feature branch's version is authoritative
+(e.g. a changelog entry). NEVER auto-resolve `package.json`, lockfiles, `VERSION`,
+or any file where the base branch has newer changes — resolve those manually.
 ```bash
-git checkout --ours <files>
-git add <files>
+# 1. Start the merge (this is what creates the conflicted state)
+git fetch origin
+git merge origin/<default-branch>
+
+# 2. List conflicted files
+git diff --name-only --diff-filter=U
+
+# 3. Take the feature branch's version (only for the approved file list)
+git checkout --ours <approved-files>
+git add <approved-files>
+
+# 4. Commit and push
 git commit -m "Merge main into <branch> - auto-resolved"
 git push origin <branch>
 ```
@@ -191,6 +216,4 @@ Details: <error message>
 
 ## References
 
-- [Merge Strategies](references/merge-strategies.md) - Detailed strategy selection
-- [Conflict Resolution](references/conflict-resolution.md) - Handling merge conflicts
-- [Cleanup Procedures](references/cleanup-procedures.md) - Post-merge cleanup
+This skill is self-contained. Merge strategies are in the table above, conflict handling in "Conflict Resolution", and post-merge cleanup in "Cleanup Process".

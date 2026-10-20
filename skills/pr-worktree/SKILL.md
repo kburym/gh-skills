@@ -30,25 +30,35 @@ DESC="button-rendering"
 BRANCH_NAME="${BRANCH_TYPE}/issue-${ISSUE_NUM}-${DESC}"
 WORKTREE_PATH=".worktrees/$(echo ${BRANCH_NAME} | tr '/' '-')"
 
-# Smart creation (NO checkout in main dir)
-git fetch origin main:main
+# Fetch the default branch into the remote-tracking ref (never into the local branch)
+git fetch origin main
+
+# Create the branch at origin/main without switching to it
 git branch "${BRANCH_NAME}" origin/main
+
+# Add the worktree
 git worktree add "${WORKTREE_PATH}" "${BRANCH_NAME}"
 
 # Start working
 cd "${WORKTREE_PATH}"
-npm install  # if needed
+# Install dependencies (use the repo's package manager: npm/pnpm/bun/yarn)
 ```
 
 ### Work on Existing PR
 
 ```bash
-# Fetch PR branch without checkout
-git fetch origin "${BRANCH_NAME}:${BRANCH_NAME}"
-git worktree add "${WORKTREE_PATH}" "${BRANCH_NAME}"
+# Reviewing an existing PR: fetch the PR head ref explicitly
+PR_NUMBER=<pr-number>
+LOCAL_BRANCH="pr-${PR_NUMBER}-review"
+WORKTREE_PATH=".worktrees/pr-${PR_NUMBER}-review"
+
+git fetch origin "pull/${PR_NUMBER}/head:${LOCAL_BRANCH}"
+git worktree add "${WORKTREE_PATH}" "${LOCAL_BRANCH}"
 cd "${WORKTREE_PATH}"
 
 # Make changes, commit, push
+# Push to the PR's head branch (for fork PRs, add the fork as a remote first)
+PR_HEAD_BRANCH=$(gh pr view "${PR_NUMBER}" --json headRefName --jq '.headRefName')
 git add .
 git commit -m "fix: resolve rendering issue
 
@@ -56,7 +66,7 @@ git commit -m "fix: resolve rendering issue
 - Verified with tests
 
 Closes #432"
-git push origin "${BRANCH_NAME}"
+git push origin "${PR_HEAD_BRANCH}"
 ```
 
 ### Parallel PR Management
@@ -65,18 +75,24 @@ git push origin "${BRANCH_NAME}"
 # Create multiple worktrees
 git worktree add .worktrees/fix-issue-432-rendering fix/issue-432-rendering
 git worktree add .worktrees/feature-issue-444-db-check feature/issue-444-db-check
-git worktree add .worktrees/hotfix-security-patch hotfix/security-patch
+git worktree add .worktrees/hotfix-2026-04-01-security-patch hotfix/security-patch
 
 # Switch between worktrees (main stays clean!)
 cd .worktrees/fix-issue-432-rendering     # work on fix
 cd ../feature-issue-444-db-check          # work on feature
-cd ../hotfix-security-patch                 # work on hotfix
+cd ../hotfix-2026-04-01-security-patch    # work on hotfix
 ```
 
 ### Cleanup After Merge
 
 ```bash
-# Verify PR merged via API or UI, then cleanup
+# Verify the PR is actually merged (must be MERGED, not CLOSED)
+MERGED=$(gh pr view <pr-number> --json state --jq '.state')
+[ "$MERGED" = "MERGED" ] || { echo "PR #<n> is $MERGED — refusing to clean up"; exit 1; }
+
+# Ensure nothing is lost
+git -C "${WORKTREE_PATH}" status --short   # must be empty
+
 git worktree remove "${WORKTREE_PATH}"
 git branch -d "${BRANCH_NAME}"
 git fetch --prune
@@ -97,8 +113,9 @@ git worktree list | grep "<branch-name>"
 # Branch exists?
 git branch -a | grep "<branch-name>"
 
-# Directory exists?
-ls -la .worktrees/ | grep "<branch-name>"
+# Directory exists? (note: directory name is the branch with '/' replaced by '-')
+WORKTREE_DIR=$(echo "${BRANCH_NAME}" | tr '/' '-')
+ls -la .worktrees/ | grep "${WORKTREE_DIR}"
 ```
 
 **If worktree exists** → Use it directly  
@@ -130,15 +147,15 @@ ls -la .worktrees/ | grep "<branch-name>"
 
 **With pr-feedback-handler**: When PR receives comments, switch to worktree, apply fixes, commit, and push updates.
 
-**With qa**: Run QA tests in worktree before creating PR. Only proceed if tests pass.
+**With QA/testing**: Run the repo's test suite in the worktree before creating the PR. Only proceed if tests pass. (No dedicated `qa` skill ships with this collection.)
 
 ## Naming Convention
 
 ```
-.worktrees/fix-issue-XXX-short-desc        # Bug fixes
-.worktrees/feature-issue-YYY-feature-name  # New features
-.worktrees/hotfix-urgent-desc             # Emergency fixes
-.worktrees/pr-NNN-branch-name              # Reviewing others' PRs
+.worktrees/pr-<number>-<contributor>-<description>   # Reviewing others' PRs
+.worktrees/hotfix-<issue-or-timestamp>-<description> # Emergency fixes
+.worktrees/fix-issue-XXX-short-desc                 # Bug fixes
+.worktrees/feature-issue-YYY-feature-name           # New features
 ```
 
 ## Summary

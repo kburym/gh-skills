@@ -49,7 +49,8 @@ Metrics:
 - Auto-Fixed PRs: 3
 - Merged PRs: 38
 
-Compliance Rate: 100% ✅
+Issue Link Compliance: 45/45 PRs (100% ✅)
+DoD Compliance (linked AND merged): 38/45 (84% ⏳)
 ```
 
 ---
@@ -98,13 +99,15 @@ Phase 4: Monitoring (continuous)
 
 ## 3. Prioritization Strategy
 
+The priority algorithm is defined in `skills/pr-manager/SKILL.md` → Priority Algorithm (single source of truth).
+
 ### Priority Factors
 
 | Factor | Weight | Calculation |
 |--------|--------|-------------|
 | DoD violation | 1000 | Binary: linked or not |
 | Age | × 10 | Days since creation |
-| Category | +100/80/60/40 | INF/O1/O2/O3 |
+| Category | +100/80/60/40 | infra/critical/high/normal |
 | Size | −0.01/line | Smaller first |
 | Blocked | −50 | Conflicts, failures |
 
@@ -114,12 +117,12 @@ Phase 4: Monitoring (continuous)
 Priority Queue (highest first):
 
 Rank  Score  PR      Reason
-────  ─────  ──────  ─────────────────────
-1     1035   #277    Missing issue (BLOCK)
-2     130    #278    5 days old, INF task
-3     85     #279    3 days old, O1 task
-4     75     #280    2 days old, O1, 1000 lines
-5     40     #281    1 day old, O3 task
+────  ─────  ──────  ──────────────────────────
+1     1035   #277    Missing issue (BLOCK) — 1000 + 35 age
+2     150    #278    5 days old, infra task — 50 + 100
+3     110    #279    3 days old, critical task — 30 + 80
+4     90     #280    2 days old, critical, 1000 lines — 20 + 80 − 10
+5     50     #281    1 day old, normal task — 10 + 40
 ```
 
 ---
@@ -170,31 +173,38 @@ Phase 3: Resolution
 
 ```yaml
 PRs:
-  - number: 277
-    task: O2-10
-    branch: okr/o2-10-stripe
-    worktree: ~/.worktrees/okr-o2-10-stripe
-    issue: 41
-    status: feedback_pending
-    priority: 85
-    comments: 2
-    dod_status: met  # ✅
-    
   - number: 278
-    task: O2-11
-    branch: okr/o2-11-payment-ui
-    worktree: ~/.worktrees/okr-o2-11-payment-ui
+    task: infra-1
+    branch: feature/infra-1-service
+    worktree: .worktrees/feature-infra-1-service
     issue: 42
     status: approved_ready
-    priority: 70
+    priority: 150
     comments: 0
+    dod_status: met  # ✅
+
+  - number: 279
+    task: critical-1
+    branch: feature/critical-1-auth
+    worktree: .worktrees/feature-critical-1-auth
+    issue: 43
+    status: feedback_pending
+    priority: 110
+    comments: 2
     dod_status: met  # ✅
 
 DoD Metrics:
   total: 17
   issues_linked: 17
   prs_merged: 1
-  compliance_rate: 100%
+  issue_link_compliance: 100%
+  dod_compliance: 6%
+```
+
+Dashboard summary for the registry above:
+```
+Issue Link Compliance: 17/17 PRs (100% ✅)
+DoD Compliance (linked AND merged): 1/17 (6% ⏳)
 ```
 
 ---
@@ -253,7 +263,8 @@ Throughput:
 - Average Time to Merge: 2.3 days
 
 Quality:
-- DoD Compliance: 100%
+- Issue Link Compliance: 45/45 PRs (100% ✅)
+- DoD Compliance (linked AND merged): 38/45 (84% ⏳)
 - Issues Auto-Created: 12
 - Review Feedback Handled: 156
 
@@ -270,4 +281,4 @@ Efficiency:
 | DoD Compliance | 100% | 95% |
 | Time to Merge | < 3 days | < 5 days |
 | Batch Success | > 90% | > 80% |
-| Feedback Response | < 4 hours | < 8 hours |
+| Feedback Response | < 15 min | < 30 min |

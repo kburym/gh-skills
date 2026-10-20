@@ -223,8 +223,9 @@ Todo → In Progress → Review → Done
 # Calculate completion percentage
 calculate_progress() {
   local project_id="$1"
+  local owner="$2"
   
-  items=$(gh project item-list $project_id --format json)
+  items=$(gh project item-list "$project_id" --owner "$owner" --format json)
   total=$(echo "$items" | jq '.items | length')
   done=$(echo "$items" | jq '[.items[] | select(.status == "Done")] | length')
   

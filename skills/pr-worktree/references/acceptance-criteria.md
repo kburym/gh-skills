@@ -17,7 +17,7 @@
 - [ ] Support adding worktrees to existing branches
 - [ ] Support parallel worktrees (multiple simultaneous)
 - [ ] Enable switching between worktrees via `cd` commands
-- [ ] Support rebase operations within worktrees (`git rebase main`)
+- [ ] Support rebase operations within worktrees (`git rebase origin/main`)
 - [ ] Support sync with remote branches (`git pull origin <branch>`)
 
 ### Cleanup Operations
@@ -60,10 +60,13 @@ git branch -vv | grep "${BRANCH_NAME}"
 ls -la "${WORKTREE_PATH}"
 
 # Verify clean main directory
-git -C "$(git rev-parse --show-toplevel)" status --short
+# The MAIN worktree path (works from inside a linked worktree)
+MAIN_WT=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')
+
+git -C "${MAIN_WT}" status --short
 
 # Verify no checkout pollution
-git -C "$(git rev-parse --show-toplevel)" branch --show-current
+git -C "${MAIN_WT}" branch --show-current
 # Should output: main (or whatever default branch)
 ```
 
@@ -72,7 +75,7 @@ git -C "$(git rev-parse --show-toplevel)" branch --show-current
 Must handle and report clearly:
 - Worktree already exists → Offer to use existing or remove
 - Branch already exists → Offer to use existing or recreate
-- Directory already exists but not registered → Clean up and recreate
+- Directory already exists but not registered → Verify the directory has no uncommitted work (`git -C <path> status --short`) before removing it; if the path is a registered worktree use `git worktree remove --force` + `git worktree prune` instead of `rm -rf`
 - Permission denied → Report with fix instructions
 - Uncommitted changes in worktree → Require stash/commit before removal
 - Network issues during fetch → Retry or report

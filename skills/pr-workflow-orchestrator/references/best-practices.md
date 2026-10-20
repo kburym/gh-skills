@@ -4,14 +4,14 @@
 
 ### Worktree Management
 - Use isolated worktrees for every task (no git checkout pollution)
-- Name worktrees consistently: `.worktrees/<branch-name>`
+- Name worktrees consistently: `.worktrees/<type>-issue-<n>-<desc>` (e.g. `.worktrees/fix-issue-432`)
 - Remove worktrees immediately after merge
 - Never work directly in main workspace
 
 ### PR Lifecycle Management
 - Always create PR with linked issue
 - Immediately dispatch feedback handler after opening
-- Monitor every 2 minutes until merged
+- Monitor every 3 minutes until merged
 - Never let PR sit idle > 30 minutes without action
 
 ### Feedback Response Priority
@@ -22,16 +22,19 @@
 
 ## Monitoring Guidelines
 
-### PR Health Check (Every 2 Minutes)
+### PR Health Check (Every 3 Minutes)
 ```bash
 # Check status
-gh pr view <number> --json state,mergeStateStatus,checks
+gh pr view <number> --json state,mergeStateStatus,statusCheckRollup
 
 # Check for new reviews
-gh pr reviews <number> --json state,author,body
+gh pr view <number> --json reviews --jq '.reviews[] | {author: .author.login, state: .state, body: .body}'
 
 # Check for new comments
-gh pr comments <number> --json author,body,createdAt
+gh pr view <number> --json comments --jq '.comments[] | {author: .author.login, body: .body, createdAt: .createdAt}'
+
+# Inline (diff-anchored) review comments — not exposed by `gh pr view`
+gh api "repos/{owner}/{repo}/pulls/<number>/comments" --paginate --jq '.[] | {author: .user.login, path: .path, line: .line, body: .body}'
 ```
 
 ### Stale PR Detection (Every 30 Minutes)
@@ -89,7 +92,7 @@ User: Open PR
 → PR #576 opened
 → Monitoring for reviews...
 
-[2 min pass - no reviews]
+[3 min pass - no reviews]
 [5 min pass - no reviews]
 [CI passes]
 

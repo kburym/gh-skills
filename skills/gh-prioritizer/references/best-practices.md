@@ -141,7 +141,7 @@ SIZE=$(gh pr view <number> --json additions,deletions --jq '.additions + .deleti
 gh-prioritizer set-manual 323 P1-High
 
 # Document why
-gh issue comment 323 --body "Manual priority: P1-High (auto-detected P2, but affects reporting)"
+gh issue comment 323 --body "Manual priority: P1-High (auto-detected P2-Medium, but affects reporting)"
 ```
 
 ---
@@ -181,7 +181,7 @@ echo "Priority sync complete"
 ```bash
 # Good
 gh-prioritizer update-project 1
-# Output: "Updated 23 items: P0:1, P1:8, P2:10, P3:4"
+# Output: "Updated 23 items: P0-Critical:1, P1-High:8, P2-Medium:10, P3-Low:4"
 
 # Bad
 gh-prioritizer update-project 1
@@ -282,7 +282,7 @@ gh-prioritizer audit --project 1 --sla-check
 # High priority PRs get reviewed first
 ```
 
-### With issue-labeler
+### With issue-labeler (optional, external — not part of this collection)
 
 ```bash
 # Sync issue and PR priorities
@@ -306,7 +306,7 @@ PROJECT_FIELDS=$(gh api graphql -f query='...' | jq '.')
 
 ```bash
 # Process in batches of 50
-gh project item-list 1 --limit 50 | \
+gh project item-list <project-number> --owner "<owner>" --format json --limit 50 | \
   jq -c '.items[]' | \
   while read item; do
     # Process each item

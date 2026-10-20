@@ -58,7 +58,7 @@
 ```markdown
 ## Code Review Summary
 
-**Overall assessment:** [APPROVE / REQUEST CHANGES / COMMENT]
+**Overall assessment:** [APPROVED / CHANGES_REQUESTED / COMMENTED]
 
 **Key findings:**
 - <N> security issues
@@ -102,10 +102,21 @@ Review Complete:
     HIGH: <N>
     MEDIUM: <N>
     LOW: <N>
+  Categories:
+    Security: <N>
+    Quality: <N>
+    Performance: <N>
+    Testing: <N>
+    Documentation: <N>
+    Architecture: <N>
+    Maintainability: <N>
+    Compatibility: <N>
   Blocking Issues: <N>
   Non-Blocking: <N>
   Action: <proceed / fix_required / needs_discussion>
 ```
+
+**Category taxonomy (shared with pr-commenter)**: `Security, Quality, Performance, Testing, Documentation, Architecture, Maintainability, Compatibility`
 
 ## Error Handling
 

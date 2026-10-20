@@ -9,6 +9,14 @@ Posts structured comments on Pull Requests with support for line-level feedback 
 
 ## Workflow
 
+### Step 0: Fetch Existing Comments
+
+```bash
+# List review comments with their IDs
+gh api "repos/{owner}/{repo}/pulls/<pr-number>/comments" \
+  --jq '.[] | {id, path, line, user: .user.login, body}'
+```
+
 ### Step 1: Prepare Comment Content
 
 **Format based on comment type:**
@@ -43,7 +51,7 @@ Once these are added, this will be ready to merge!
 
 **Reply to existing comment:**
 ```markdown
-@reviewer Good catch! I've updated the implementation to handle the edge case:
+@<actual-reviewer-login> Good catch! I've updated the implementation to handle the edge case:
 
 - Added null check on line 45
 - Added test case for this scenario
@@ -52,14 +60,24 @@ Once these are added, this will be ready to merge!
 Please re-review when you have a chance.
 ```
 
+Substitute the real login from the comment author; GitHub will not notify a placeholder.
+
 ### Step 2: Post Comment
 
+Substitute `<pr-number>`, `<comment-id>` and `<file-path>` yourself — gh only expands `{owner}`, `{repo}`, `{branch}`. Run from inside the repository (or set `GH_REPO=owner/repo`).
+
 **Post line-level comment:**
+
+Get the commit sha with `gh pr view <n> --json headRefOid --jq .headRefOid`.
+
 ```bash
-gh pr review <pr-number> --comment --body "$(cat <<'EOF'
-<comment content>
-EOF
-)"
+# Post a line-level comment (requires commit_id + path + line + side)
+gh api "repos/{owner}/{repo}/pulls/<pr-number>/comments" \
+  -f body="<comment content>" \
+  -F commit_id=<commit-sha> \
+  -F path=<file-path> \
+  -F line=<line-number> \
+  -F side=RIGHT
 ```
 
 **Post general PR comment:**
@@ -72,18 +90,31 @@ EOF
 
 **Post reply to specific comment:**
 ```bash
-# Get comment ID from previous fetch
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment-id}/replies \
-  -f body="<reply content>"
+# Reply to an existing review comment (in_reply_to = the comment's id)
+gh api "repos/{owner}/{repo}/pulls/<pr-number>/comments" \
+  -f body="<reply content>" \
+  -F in_reply_to=<comment-id>
 ```
 
 ### Step 3: Handle Thread Resolution
 
 **Resolve conversation (if applicable):**
+
 ```bash
-# Mark as resolved via GitHub API
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment-id} \
-  -X PATCH -f state=RESOLVED
+# Resolve a review thread (GraphQL — REST has no resolve endpoint)
+THREAD_ID=$(gh api graphql -f query='
+  query($owner:String!,$repo:String!,$num:Int!){
+    repository(owner:$owner,name:$repo){
+      pullRequest(number:$num){
+        reviewThreads(first:50){ nodes{ id isResolved comments(first:1){ nodes{ id } } } }
+      }
+    }
+  }' -F owner="<owner>" -F repo="<repo>" -F num=<pr-number> \
+  --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.comments.nodes[0].id == "<comment-id>") | .id')
+
+gh api graphql -f query='
+  mutation($threadId:ID!){ resolveReviewThread(input:{threadId:$threadId}){ thread{ isResolved } } }' \
+  -F threadId="$THREAD_ID"
 ```
 
 ### Step 4: Report Status
@@ -96,6 +127,15 @@ Comment Posted:
   Thread: <thread-id or none>
   Status: <posted / resolved / needs-follow-up>
 ```
+
+## Command Mapping
+
+| Requirement | Command |
+|-------------|---------|
+| General PR comment | `gh pr comment <n> --body "…"` |
+| Line-level comment | `gh api repos/{owner}/{repo}/pulls/<n>/comments` (commit_id + path + line + side) |
+| Reply in thread | `gh api repos/{owner}/{repo}/pulls/<n>/comments -F in_reply_to=<id>` |
+| Resolve thread | `gh api graphql` → `resolveReviewThread` mutation |
 
 ## Comment Types
 
@@ -144,7 +184,7 @@ Responds to a question or suggestion with reasoning.
 
 **Template:**
 ```markdown
-@reviewer Thanks for the suggestion!
+@<actual-reviewer-login> Thanks for the suggestion!
 
 **Reasoning for current approach:**
 I considered using the newer pattern, but opted for the current implementation because:
@@ -215,8 +255,7 @@ echo "Comment for #278" | gh pr comment 278 --body-file -
 - Retry with exponential backoff
 
 **If replying to resolved thread:**
-- Reopen thread first: `gh api repos/{o}/{r}/pulls/{n}/comments/{id} -X PATCH -f state=PENDING`
-- Then post reply
+- GitHub has no 'reopen' operation — `resolveReviewThread` is one-way. To revive a thread, post a new reply with `in_reply_to` (see Step 2).
 
 ## Best Practices
 
@@ -225,3 +264,10 @@ echo "Comment for #278" | gh pr comment 278 --body-file -
 3. **Be respectful:** Frame as suggestions, not demands
 4. **Be actionable:** Clear next steps for the author
 5. **Use severity:** HIGH (blocking), MEDIUM (should fix), LOW (optional)
+
+**Category taxonomy (shared with pr-reviewer)**: `Security, Quality, Performance, Testing, Documentation, Architecture, Maintainability, Compatibility`
+
+## References
+
+- [Acceptance Criteria](references/acceptance-criteria.md) — FR/TS requirements, comment formats, error handling
+- [Best Practices](references/best-practices.md) — When to use line-level vs general comments, tone, threading, severity labels

@@ -24,7 +24,7 @@
   - Style keywords: "formatting", "lint", "style violation"
   - Logic keywords: "logic error", "incorrect", "wrong result"
 - ❌ **MUST NOT** classify as Type A when:
-  - Comment is explicitly marked as "nit" or "optional"
+  - Comment is explicitly marked as "nit" or "optional" (unless the reviewer explicitly asked for a specific mechanical fix)
   - Comment asks questions without stating a problem
   - Comment is a suggestion for future improvement
 
@@ -40,7 +40,7 @@
   - Comment requires immediate action
 
 ### FR-003: Fix Implementation (Type A)
-- ✅ **MUST** checkout the correct branch in the worktree
+- ✅ **MUST** verify the worktree is already on the correct branch (never `git checkout` inside a worktree)
 - ✅ **MUST** locate and read the file(s) mentioned in the comment
 - ✅ **MUST** implement the fix according to comment instructions
 - ✅ **MUST** run tests to verify the fix
@@ -48,13 +48,15 @@
 - ✅ **MUST** push the fix to the same branch
 - ❌ **MUST NOT** push if tests fail
 - ❌ **MUST NOT** modify files not mentioned in the comment without explicit approval
+- ❌ **MUST NOT** stage unrelated changes (`git add .`) — stage only the files changed by the fix
 
 #### Fix Commit Message Requirements
 - ✅ **MUST** start with "Fix: " prefix
 - ✅ **MUST** include brief description of change
 - ✅ **MUST** reference the commenter username
 - ✅ **MUST** include specific change details in commit body
-- ✅ **MUST** include "Refs: PR <number>" in footer
+- ✅ **MUST** include "Addressing feedback from @<commenter>" in the commit body
+- ✅ **MUST** include "Refs: PR #<number>" in footer
 - ❌ **MUST NOT** use generic commit messages like "Fixes" or "Update"
 
 ### FR-004: Reply Formatting (Type B)
@@ -81,13 +83,12 @@
 - ❌ **MUST NOT** simply state "will not fix" without explanation
 
 ### FR-005: Thread Resolution
-- ✅ **MUST** mark resolved threads when fix is implemented and pushed
-- ✅ **MUST** mark resolved threads when reply is posted
-- ❌ **MUST NOT** resolve threads without taking action
-- ✅ **SHOULD** use GitHub API for automated resolution where available
+- ✅ **SHOULD** resolve the thread via the GraphQL API (`resolveReviewThread` mutation) when the fix is pushed or a reply is posted
+- ❌ **MUST NOT** mark a thread resolved without taking action
+- ✅ **FALLBACK** if the API is unavailable: state in the reply that the thread can be resolved manually
 
 ### FR-006: Status Reporting
-- ✅ **MUST** report to super agent with structured results
+- ✅ **MUST** report to the orchestrating agent with structured results
 - ✅ **MUST** include count of comments received, fixed, and replied to
 - ✅ **MUST** indicate current PR status (resolved/pending/awaiting-reviewer)
 - ✅ **MUST** list next steps for workflow continuation
@@ -97,16 +98,16 @@
 
 ### EHS-001: Merge Conflicts During Fix
 - ✅ **DETECT** conflict when `git push` fails
-- ✅ **RESOLVE** by pulling latest main: `git pull origin main`
+- ✅ **RESOLVE** by fetching and merging the base branch: `git fetch origin && git merge origin/<default-branch>`
 - ✅ **MERGE** conflicts manually or using merge tool
 - ✅ **RE-RUN** tests after conflict resolution
-- ✅ **RE-PUSH** after successful merge
-- ❌ **ABORT** only if conflicts are unresolvable, report to super agent
+- ✅ **RE-PUSH** with `git push origin <branch-name>` after successful merge
+- ❌ **ABORT** only if conflicts are unresolvable, report to the orchestrating agent
 
 ### EHS-002: Unclear Comment
 - ✅ **DETECT** ambiguity in comment instructions
 - ✅ **REPLY** asking for clarification with specific questions
-- ✅ **DOCUMENT** unclear comment for super agent tracking
+- ✅ **DOCUMENT** unclear comment for the orchestrating agent tracking
 - ❌ **NEVER** guess or assume intent of unclear comments
 - ✅ **WAIT** for clarification before proceeding
 
@@ -122,18 +123,18 @@
 - ✅ **ANALYZE** if failure is related to the fix or pre-existing
 - ✅ **FIX** related failures before committing
 - ❌ **NEVER** push commits with failing tests
-- ✅ **REPORT** pre-existing failures to super agent for triage
+- ✅ **REPORT** pre-existing failures to the orchestrating agent for triage
 
 ### EHS-005: Cannot Access Worktree
 - ✅ **DETECT** when worktree path is invalid or deleted
-- ✅ **REPORT** to super agent immediately
-- ❌ **NEVER** attempt to recreate worktree without super agent coordination
-- ✅ **WAIT** for super agent to provide worktree location or recreate
+- ✅ **REPORT** to the orchestrating agent immediately
+- ❌ **NEVER** attempt to recreate worktree without the orchestrating agent coordination
+- ✅ **WAIT** for the orchestrating agent to provide worktree location or recreate
 
 ### EHS-006: GitHub API Errors
 - ✅ **DETECT** when `gh pr comment` or `gh pr view` fails
 - ✅ **RETRY** with exponential backoff (3 attempts)
-- ✅ **REPORT** persistent failures to super agent
+- ✅ **REPORT** persistent failures to the orchestrating agent
 - ❌ **NEVER** silently drop comments or actions due to API errors
 - ✅ **LOG** all API errors with full error message
 
@@ -166,9 +167,9 @@ Action: Evaluate security implication, fix if valid, reply if already secure
 ### Example 4: Edge Case - Nit Override
 ```
 Comment: "Nit: This variable name is confusing"
-Classification: ✅ Type A (Fix)
-Reason: Code clarity improvement, simple fix
-Action: Rename variable with clearer name
+Classification: ✅ Type B (Reply)
+Reason: Marked as a nit; non-blocking.
+Action: Confirm intent and reply; only fix if the reviewer explicitly asked for a specific mechanical change
 ```
 
 ## Performance Requirements

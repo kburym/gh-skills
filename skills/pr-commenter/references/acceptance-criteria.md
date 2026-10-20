@@ -13,7 +13,7 @@ Functional requirements, format specifications, and validation scenarios for the
 | FR1.1 | Skill MUST post comments on specific lines of code in a PR | ✅ |
 | FR1.2 | Skill MUST reference the correct file path and line number | ✅ |
 | FR1.3 | Skill MUST include severity indicator (HIGH/MEDIUM/LOW) | ✅ |
-| FR1.4 | Skill MUST include category label (Security/Quality/Performance/etc.) | ✅ |
+| FR1.4 | Skill MUST include category label (Security/Quality/Performance/Testing/Documentation/Architecture/Maintainability/Compatibility) | ✅ |
 | FR1.5 | Skill MUST provide both the problematic code and suggested fix | ✅ |
 | FR1.6 | Skill MUST explain the impact of the issue | ✅ |
 
@@ -34,7 +34,7 @@ Functional requirements, format specifications, and validation scenarios for the
 | FR3.1 | Skill MUST reply to existing comments by ID | ✅ |
 | FR3.2 | Skill MUST support threaded conversations | ✅ |
 | FR3.3 | Skill MUST resolve conversations when appropriate | ✅ |
-| FR3.4 | Skill MUST reopen resolved conversations when replying | ✅ |
+| FR3.4 | Skill MUST reply to a resolved conversation by posting a new reply (`in_reply_to`) — GitHub has no reopen operation | ✅ |
 | FR3.5 | Skill MUST tag the original commenter in replies | ✅ |
 
 ### FR4: Multi-PR Coordination
@@ -142,7 +142,7 @@ done
 |---|---|---|---|
 | EH2.1 | Cannot comment on PR (403 Forbidden) | Verify repository access | ✅ |
 | EH2.2 | Cannot resolve conversation (maintainer only) | Request maintainer action | ✅ |
-| EH2.3 | Cannot post on archived PR | Reopen PR first | ✅ |
+| EH2.3 | Cannot post on archived repository (410 Gone) | Unarchive the repository (Settings → General → Unarchive); PRs themselves cannot be reopened | ✅ |
 
 ### API/Network Errors
 
@@ -160,7 +160,7 @@ done
 | EH4.1 | Comment body empty | Reject and request content | ✅ |
 | EH4.2 | Comment exceeds max length (65536 chars) | Truncate and split | ✅ |
 | EH4.3 | Invalid markdown formatting | Fix formatting issues | ✅ |
-| EH4.4 | Missing required severity/category | Add required metadata | ✅ |
+| EH4.4 | Missing severity/category on a line-level or review-finding comment | Add the required metadata (general PR comments do not require it) | ✅ |
 
 ---
 
@@ -211,7 +211,7 @@ done
 - Conversation marked resolved
 - UI reflects resolved state
 - Cannot resolve already resolved thread
-- Can reopen if needed
+- A resolved thread can be revived by posting a new reply with `in_reply_to`
 
 ❌ **Fail Criteria:**
 - Conversation not marked resolved

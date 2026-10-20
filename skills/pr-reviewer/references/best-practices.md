@@ -18,11 +18,14 @@
 - ✅ Set aside adequate time (don't rush large PRs)
 
 ### Environment Setup
+
+Detect the package manager from the lockfile (`package-lock.json`, `pnpm-lock.yaml`, `bun.lockb`, `yarn.lock`) before running any install, test or typecheck command — the commands below assume npm.
+
 ```bash
-# Fetch PR to local worktree for deep analysis
-cd <worktree>
-git fetch origin pull/<number>/head:pr-<number>
-git checkout pr-<number>
+# Review in an isolated worktree (never checkout in the main directory)
+git fetch origin "pull/<number>/head:pr-<number>"
+git worktree add ".worktrees/pr-<number>-review" "pr-<number>"
+cd ".worktrees/pr-<number>-review"
 
 # Run local checks
 npm test
@@ -80,7 +83,7 @@ if (!user) {
 ## Review Categories
 
 ### Security Review Checklist
-- [ ] No secrets in code (use Infisical)
+- [ ] No secrets in code (use the repo's secrets manager — e.g. Infisical, Vault, or plain env vars)
 - [ ] Input validation present
 - [ ] Output encoding/escaping
 - [ ] Authorization checks
@@ -131,6 +134,9 @@ if (!user) {
 ## Automation Integration
 
 ### Pre-Review Automation
+
+Detect the package manager from the lockfile before running these commands (npm shown below).
+
 ```bash
 # Run before manual review
 npm run lint      # Code style
@@ -219,7 +225,7 @@ Before submitting your review:
 - Share knowledge in team channels
 
 ### When to Escalate
-- Security uncertainty → security-engineer
-- Performance questions → qa-engineer with benchmark
-- Architecture concerns → tech lead
-- Domain knowledge gap → domain expert
+- Security uncertainty → escalate security uncertainty to a security reviewer (if one is available) or flag it as a HIGH-severity open question in the review body.
+- Performance questions → include a benchmark or measurement in the review body.
+- Architecture concerns → flag as an open question in the review body.
+- Domain knowledge gap → flag as an open question in the review body.

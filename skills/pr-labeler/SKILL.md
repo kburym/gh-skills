@@ -12,6 +12,11 @@ description: |
 
 Automates PR label assignment and management throughout the PR lifecycle.
 
+## Interface
+
+This skill is invoked by name from other skills (e.g. "pr-labeler, auto-label PR #123").
+It performs the operation directly using `gh`; there is no `pr-labeler` executable.
+
 ## Overview
 
 **Purpose**: Maintain consistent, accurate labeling across all PRs with zero manual intervention.
@@ -21,7 +26,7 @@ Automates PR label assignment and management throughout the PR lifecycle.
 Use this skill when:
 - Auto-labeling new PRs based on branch names and files
 - Calculating and updating PR size labels (XS/S/M/L/XL)
-- Managing status label lifecycle (wip → ready-for-review → approved → merged)
+- Managing status label lifecycle (wip → ready-for-review → changes-requested / approved → blocked)
 - Running label hygiene checks across all PRs
 - Performing bulk label operations on multiple PRs
 
@@ -33,22 +38,33 @@ Use this skill when:
 |----------------|-------|
 | `feature/*` | `feature` |
 | `fix/*`, `bugfix/*` | `bug` |
-| `hotfix/*` | `hotfix` + `P0-critical` |
+| `hotfix/*` | `hotfix` + `P0-Critical` |
 | `refactor/*` | `refactor` |
 | `docs/*` | `documentation` |
 | `security/*` | `security` + `security-review` |
 | `performance/*` | `performance` |
 | `deps/*` | `dependencies` |
 
+### Priority Labels (auto-calculated from branch type)
+
+| Branch Pattern | Priority Label |
+|----------------|----------------|
+| `hotfix/*` | `P0-Critical` |
+| `feature/*` (customer-facing) | `P1-High` |
+| `feature/*` (internal) | `P2-Medium` |
+| `docs/*`, `refactor/*` | `P3-Low` |
+
+If no priority rule matches, default to `P2-Medium`.
+
 ### Size Labels (auto-calculated from diff)
 
 | Lines Changed | Label |
 |---------------|-------|
-| < 50 lines | `size/XS` |
-| 50-100 lines | `size/S` |
-| 100-300 lines | `size/M` |
-| 300-500 lines | `size/L` |
-| > 500 lines | `size/XL` |
+| 0-49 lines | `size/XS` |
+| 50-99 lines | `size/S` |
+| 100-299 lines | `size/M` |
+| 300-499 lines | `size/L` |
+| 500+ lines | `size/XL` |
 
 ### Team Labels (from file paths)
 
@@ -107,8 +123,8 @@ PRs Missing Required Labels:
 ┌─────────┬──────────────────┬─────────────────────────┐
 │ PR      │ Title            │ Missing                 │
 ├─────────┼──────────────────┼─────────────────────────┤
-│ #201    │ Add payment      │ size/, team/            │
-│ #202    │ Fix auth bug     │ priority, component/    │
+│ #201    │ Add payment      │ size/*, team/*          │
+│ #202    │ Fix auth bug     │ P*-*, domain/*          │
 └─────────┴──────────────────┴─────────────────────────┘
 
 Recommendations:
@@ -120,21 +136,31 @@ Recommendations:
 ### 4. Bulk Operations
 
 ```
-@pr-labeler bulk-add <LABEL> --filter "P1-high"
-@pr-labeler bulk-remove <LABEL>
+@pr-labeler bulk-add <LABEL> --filter "<label-filter>" [--dry-run]
+@pr-labeler bulk-remove <LABEL> --filter "<label-filter>" [--dry-run]
 ```
+
+**Safety:** bulk operations MUST (1) support `--dry-run`, (2) print the list of affected PRs and require explicit user confirmation before mutating, and (3) default to open, non-draft PRs only. Never run a bulk operation across all PRs without an explicit `--filter`.
+
+`--filter` matches PRs carrying **all** listed labels (same semantics as `gh pr list --label a --label b`), open and non-draft only. Always run with `--dry-run` first.
 
 ## GitHub CLI Commands
 
 ```bash
+# Verify the labels exist (gh pr edit fails on unknown labels)
+gh label list --limit 100 --json name --jq '.[].name'
+
+# Create any missing labels once
+gh label create "size/XL" --color "B60205" --description "PR larger than 500 lines"
+
 # Add labels
-gh pr edit <PR_NUMBER> --add-label "bug,P1-high,team/backend"
+gh pr edit <PR_NUMBER> --add-label "bug,P1-High,team/backend"
 
 # Remove labels
 gh pr edit <PR_NUMBER> --remove-label "status/wip"
 
-# List PRs by label
-gh pr list --label "P1-high" --label "status/ready-for-review"
+# List PRs by label (all listed labels must match)
+gh pr list --label "P1-High" --label "status/ready-for-review"
 
 # Get PR labels
 gh pr view <PR_NUMBER> --json labels
@@ -142,8 +168,8 @@ gh pr view <PR_NUMBER> --json labels
 
 ## Best Practices
 
-1. **Every PR MUST have**: type + priority + size + team/domain labels
-2. **Hotfixes automatically get** `P0-critical` priority
+1. **Every PR MUST have**: type + priority + size labels (priority defaults to `P2-Medium` when no rule matches); team/domain labels whenever a file path or branch name matches a rule
+2. **Hotfixes automatically get** `P0-Critical` priority
 3. **Status labels must be updated immediately** when state changes
 4. **XL PRs (>500 lines)** require 2+ reviewers
 
@@ -151,14 +177,14 @@ gh pr view <PR_NUMBER> --json labels
 
 Label conventions (adjust to your repository label set):
 
-| Category | Labels |
-|----------|--------|
-| **Type** | bug, feature, enhancement, documentation, refactor, performance, security, dependencies, testing, devops, config, ui, breaking |
-| **Priority** | P0-critical, P1-high, P2-medium, P3-low |
-| **Status** | status/wip, status/ready-for-review, status/changes-requested, status/approved, status/blocked, status/ci-failing, status/awaiting-qa, status/qa-passed |
-| **Size** | size/XS, size/S, size/M, size/L, size/XL |
-| **Team** | team/frontend, team/backend, team/devops, team/qa, team/security, team/platform, team/database, team/product |
-| **Domain** | domain/api, domain/auth, domain/payment, domain/ui, domain/docs, domain/data, domain/infra |
+| Category | Labels | Auto-detection |
+|----------|--------|----------------|
+| **Type** | bug, feature, enhancement, documentation, refactor, performance, security, dependencies, testing, devops, config, ui, breaking | bug, feature, documentation, refactor, performance, security, dependencies (enhancement, testing, devops, config, ui, breaking: label set available for manual use; no automatic rule) |
+| **Priority** | P0-Critical, P1-High, P2-Medium, P3-Low | all (P0-Critical for hotfix/*, P1-High for customer-facing feature/*, P2-Medium for internal feature/*, P3-Low for docs/* and refactor/*, P2-Medium default) |
+| **Status** | status/wip, status/ready-for-review, status/changes-requested, status/approved, status/blocked, status/ci-failing, status/awaiting-qa, status/qa-passed | all (set explicitly via `update-status`; status/* labels are label set available for manual use; no automatic rule) |
+| **Size** | size/XS, size/S, size/M, size/L, size/XL | all (calculated from the diff) |
+| **Team** | team/frontend, team/backend, team/devops, team/qa, team/security, team/platform, team/database, team/product | team/frontend, team/backend, team/devops, team/qa, team/security (team/platform, team/database, team/product: label set available for manual use; no automatic rule) |
+| **Domain** | domain/api, domain/auth, domain/payment, domain/ui, domain/docs, domain/data, domain/infra | domain/api, domain/auth, domain/payment, domain/ui, domain/docs (domain/data, domain/infra: label set available for manual use; no automatic rule) |
 
 ## Integration
 
@@ -176,7 +202,6 @@ Label conventions (adjust to your repository label set):
 
 ## References
 
-- [Label Detection Rules](references/label-detection-rules.md) - Complete detection patterns
-- [Size Calculation](references/size-calculation.md) - Diff analysis for sizing
-- [Hygiene Standards](references/hygiene-standards.md) - Label quality criteria
-- [Bulk Operations](references/bulk-operations.md) - Mass labeling workflows
+This skill is self-contained. Detection patterns, size calculation, hygiene criteria and
+bulk-operation workflows are specified inline above (Type / Sizing / Team / Domain tables).
+No external reference files are required.

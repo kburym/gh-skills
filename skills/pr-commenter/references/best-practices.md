@@ -33,7 +33,7 @@ Guidelines for effective PR commenting, etiquette, and threading strategies.
 | Scenario | Example |
 |---|---|
 | Overall PR feedback | "Great work on the error handling improvements" |
-| Architecture concerns | "The new service pattern doesn't align with our DDD approach" |
+| Architecture concerns | "The new service pattern doesn't align with the repo's architectural conventions" |
 | Missing requirements | "This PR should include migration scripts" |
 | Summary of review | "3 issues found, 2 need addressing before merge" |
 | Cross-cutting concerns | "The logging approach needs standardization" |
@@ -153,7 +153,7 @@ Security issue here
 
 ✅ **Contextual Response:**
 ```markdown
-@reviewer Good catch! I've updated the implementation:
+@<actual-reviewer-login> Good catch! I've updated the implementation:
 
 - [x] Changed to parameterized queries
 - [x] Added input sanitization
@@ -196,13 +196,15 @@ Commit: `abc1234`
 
 ### Reopening Threads
 
-✅ **Appropriate Reopening:**
+GitHub has no 'reopen' operation — `resolveReviewThread` is one-way. To revive a thread, post a new reply with `in_reply_to`.
+
+✅ **Appropriate Reply to Revive a Thread:**
 - Fix doesn't fully address the concern
 - New information invalidates the resolution
 - Related issue discovered
 - Reviewer requests additional changes
 
-✅ **Reopening Message:**
+✅ **Reply Message:**
 ```markdown
 Reopening this thread - the current fix handles the null case but doesn't address the undefined scenario. Could you update to handle both?
 ```
@@ -298,11 +300,11 @@ Security problem. Anyone can access this. You need auth.
 
 ✅ **Good:**
 ```markdown
-@reviewer Thanks for the question about the database choice!
+@<actual-reviewer-login> Thanks for the question about the database choice!
 
 **Reasoning for PostgreSQL over MongoDB:**
 
-1. **ACID compliance:** We need transactional integrity for financial data
+1. **ACID compliance:** We need transactional integrity for transactional data
 2. **Existing expertise:** Team has 5+ years PostgreSQL experience
 3. **Query complexity:** Reporting queries require JOINs that would be inefficient in MongoDB
 4. **Migration path:** Existing data is in PostgreSQL
@@ -317,7 +319,7 @@ Happy to discuss further if you see concerns I missed!
 
 ❌ **Bad:**
 ```markdown
-@reviewer We always use PostgreSQL. It's better.
+@<actual-reviewer-login> We always use PostgreSQL. It's better.
 ```
 
 ### Example 4: Batch Summary
@@ -366,7 +368,7 @@ Fixed everything. Ready to merge?
 
 **Changes made:**
 - Replaced `any` with `User` interface in `src/types/user.ts`
-- Added runtime validation with Zod schema
+- Added runtime validation with the repo's schema validator
 - Updated `validateUser()` to return typed result
 - Added 3 new test cases for type validation edge cases
 
@@ -438,6 +440,8 @@ Done
 | **Architecture** | Design patterns, structure | "Violates SRP" |
 | **Maintainability** | Future maintenance concerns | "Magic numbers" |
 | **Compatibility** | Breaking changes, versioning | "API v1 breakage" |
+
+**Category taxonomy (shared with pr-reviewer)**: `Security, Quality, Performance, Testing, Documentation, Architecture, Maintainability, Compatibility`
 
 ---
 

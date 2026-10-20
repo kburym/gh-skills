@@ -11,7 +11,9 @@ Coordinates the complete development-to-merge lifecycle using four specialized s
 
 The PR Workflow Orchestrator manages the entire lifecycle of a Pull Request from task inception through merge completion. It ensures no PR is left unattended by continuously monitoring, handling feedback, and driving to completion.
 
-**Definition of Done**: PR is **MERGED** or explicitly **CLOSED** with documented reason.
+**Definition of Done**: PR is **MERGED** and the worktree is cleaned up.
+
+**Invocation alias:** `@super` refers to the top-level orchestrating agent.
 
 ## When to Use
 
@@ -39,7 +41,7 @@ User: @super Deliver fix for issue #432
 
 Orchestrator:
 1. Dispatch pr-worktree
-   → Worktree: .worktrees/fix-issue-432-dialog-props
+   → Worktree: .worktrees/fix-issue-432
 
 2. [Developer works in worktree...]
 
@@ -47,7 +49,7 @@ Orchestrator:
    → PR #576 opened
 
 4. IMMEDIATELY dispatch pr-feedback-handler
-   → Monitor for reviews (2-min check cycle)
+   → Monitor for reviews (3-min check cycle)
 
 5. Handle any feedback → Fix or reply
 
@@ -87,19 +89,12 @@ Orchestrator:
 ### Mandatory Feedback Handling
 
 When a PR opens:
-1. Wait 2 minutes for initial reviews
+1. Wait 3 minutes for initial reviews
 2. **ALWAYS** dispatch pr-feedback-handler
 3. Process all comments immediately
-4. Continue monitoring every 2 minutes
+4. Continue monitoring every 3 minutes
 
-**Auto-Handling Time Limits:**
-
-| Review Type | Action | Time Limit |
-|-------------|--------|------------|
-| Requested changes | Fix immediately | 10 min |
-| Questions | Answer with evidence | 5 min |
-| CI failure | Investigate and fix | 15 min |
-| Merge conflict | Rebase and fix | 15 min |
+**Auto-Handling Time Limits**: see references/best-practices.md → "Feedback Response Priority".
 
 ### Merge Criteria
 
@@ -130,20 +125,68 @@ When a PR opens:
 
 | Command | Purpose | Mandatory Follow-up |
 |---------|---------|---------------------|
-| `Start task` | Create worktree | None |
-| `Open PR` | Push & create PR | pr-feedback-handler |
-| `Handle feedback` | Process reviews | Continue monitoring |
-| `Complete delivery` | Merge & cleanup | pr-merger + cleanup |
+| `@pr-workflow-orchestrator Start task <task>` | Create worktree | None |
+| `@pr-workflow-orchestrator Open PR <branch>` | Push & create PR | pr-feedback-handler |
+| `@pr-workflow-orchestrator Handle feedback <pr>` | Process reviews | Continue monitoring |
+| `@pr-workflow-orchestrator Complete delivery <pr>` | Merge & cleanup | pr-merger + cleanup |
+
+## Prompt Examples
+
+Copy-paste prompts that drive this skill. Each one names the skill and the
+intent, so the agent picks the right workflow without extra ceremony.
+
+### 1. Ship a single task end to end
+
+```
+@pr-workflow-orchestrator Start task: implement the rate limiter for the
+public API (issue #432). Work in a worktree, open a PR linked to issue #432,
+watch for reviews, and merge it when CI is green.
+```
+
+### 2. Take over a PR that already exists
+
+```
+@pr-workflow-orchestrator Handle feedback for PR #277. Read every review and
+inline comment, fix what is real, reply to what is not, and merge when the
+approval lands.
+```
+
+### 3. Run several tasks in parallel
+
+```
+@pr-workflow-orchestrator Start tasks:
+- task A: add the Stripe webhook endpoint (issue #444) — branch feature/stripe-webhook
+- task B: fix the 404 on the settings page (issue #445) — branch fix/settings-404
+- task C: split the billing module (issue #446) — branch refactor/billing-split
+Run them in parallel, one subagent per task, and report a single merged-PR
+summary at the end.
+```
+
+### 4. Keep a PR under watch
+
+```
+@pr-workflow-orchestrator Open PR for branch feature/auth-refresh. Keep
+monitoring every 3 minutes, handle feedback as it arrives, and never leave the
+PR unattended.
+```
+
+### 5. Finish and clean up
+
+```
+@pr-workflow-orchestrator Complete delivery for PR #277. Verify approval, CI
+and mergeability, merge with the repository's default strategy, then remove the
+worktree and the local branch.
+```
 
 ## Escalation Path
 
 | Issue | Escalate To |
 |-------|-------------|
-| Technical disagreement | code-reviewer |
-| Complex refactor | super orchestrator |
-| Security concerns | security-engineer |
-| Architecture concerns | plan-eng-review |
-| No reviewer response (24h) | super orchestrator |
+| Technical disagreement | pr-reviewer |
+| Complex refactor | User (scope decision) |
+| Security concerns | User (block merge, do not self-approve) |
+| Architecture concerns | User (design decision) |
+| No reviewer response (24h) | User (reassign, or merge only if explicitly instructed) |
 
 ## Success Metrics
 

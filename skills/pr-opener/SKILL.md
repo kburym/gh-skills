@@ -32,7 +32,7 @@ Use this skill when:
 | Check | Required | Verification |
 |-------|----------|--------------|
 | Issue exists | ✅ Yes | Search for existing or create new |
-| PR references issue | ✅ Yes | `Closes #N` in title and body |
+| PR references issue | ✅ Yes | `Closes #<issue>` as a plain line in the PR body |
 | Issue references PR | ✅ Yes | Comment on issue with PR link |
 | Labels applied | ✅ Yes | Dispatch pr-labeler |
 | Branch pushed | ✅ Yes | `git push -u origin <branch>` |
@@ -43,9 +43,9 @@ Use this skill when:
 
 **Search strategies**:
 ```bash
-# Extract task ID from branch name
+# Extract task ID from branch name (supports both TASK-15 and issue-432 forms)
 git branch --show-current
-grep -oE "[A-Z]+-[0-9]+" <<< "$(git branch --show-current)"
+grep -oE "[A-Za-z]+-[0-9]+" <<< "$(git branch --show-current)" | head -1
 
 # Search GitHub issues
 gh issue list --search "$(git branch --show-current)" --state all
@@ -60,15 +60,28 @@ gh issue list --search "<TASK-ID>" --state all
 
 ```bash
 branch=$(git branch --show-current)
-task_id=$(echo "$branch" | grep -oE "[A-Z]+-[0-9]+" || echo "")
+task_id=$(echo "$branch" | grep -oE "[A-Za-z]+-[0-9]+" | head -1 || echo "")
 
 if [ -n "$task_id" ]; then
   title="$task_id: ${branch//-/ }"
 else
-  title=$(git log --oneline origin/main..HEAD --reverse | head -1 | cut -d' ' -f2-)
+  default_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main)
+  title=$(git log --oneline "origin/${default_branch}..HEAD" --reverse | head -1 | cut -d' ' -f2-)
 fi
 
-gh issue create --title "$title" --body "..." --label "enhancement"
+# Only apply a label that exists in this repository
+label="enhancement"
+if gh label list --limit 200 --json name --jq '.[].name' | grep -qx "$label"; then
+  gh issue create --title "$title" --body "Created automatically for branch \`${branch}\` by pr-opener." --label "$label"
+else
+  gh issue create --title "$title" --body "Created automatically for branch \`${branch}\` by pr-opener."
+fi
+```
+
+### Step 2.5: Push Branch (MANDATORY)
+
+```bash
+git push -u origin <branch>
 ```
 
 ### Step 3: Create PR with Issue Link
@@ -85,7 +98,13 @@ gh issue create --title "$title" --body "..." --label "enhancement"
 
 **Create PR**:
 ```bash
+# Run from the worktree containing the branch
+cd <worktree-path>
+git rev-parse --abbrev-ref HEAD   # must equal <branch>
+
 gh pr create --title "<type>: <Description> (Closes #${issue_number})" --body "
+Closes #${issue_number}
+
 ## Summary
 Brief description of what changed
 
@@ -103,7 +122,6 @@ Brief description of what changed
 - ✅ PR references issue with 'Closes #${issue_number}'
 
 ## Related
-**Closes #${issue_number}**
 - Issue: #${issue_number}
 - Branch: ${branch}
 "
@@ -113,6 +131,7 @@ Brief description of what changed
 
 ```bash
 # Add PR link to issue
+pr_url=$(gh pr view "$branch" --json url --jq '.url')
 gh issue comment "$issue_number" --body "PR created: ${pr_url}"
 ```
 
@@ -120,7 +139,12 @@ gh issue comment "$issue_number" --body "PR created: ${pr_url}"
 
 ```bash
 pr_number=$(gh pr view "$branch" --json number --jq '.number')
-pr-labeler auto-label "$pr_number"
+```
+
+Then invoke the pr-labeler skill:
+
+```
+@pr-labeler auto-label <pr_number>
 ```
 
 ## Commands
@@ -174,13 +198,13 @@ No issue exists for this work.
 Required Actions:
 1. Manually create issue on GitHub
 2. Re-run pr-opener with issue number
-3. Or provide issue number: @pr-opener open PR #<number>
+3. Or provide the issue number: @pr-opener Open PR for <branch-name> with issue #<number>
 ```
 
 ## Integration
 
 **Called by**:
-- Super orchestrator (after work completion)
+- The orchestrating agent (after work completion)
 - pr-manager (batch operations)
 - User (manual PR creation)
 
@@ -195,6 +219,4 @@ Required Actions:
 
 ## References
 
-- [DoD Standards](references/dod-standards.md) - Definition of Done details
-- [Issue Creation](references/issue-creation.md) - Creating issues for PRs
-- [Label Integration](references/label-integration.md) - pr-labeler coordination
+This skill is self-contained. The DoD requirements are in the table above; the issue-search and label commands are in Step 1 and Step 5.

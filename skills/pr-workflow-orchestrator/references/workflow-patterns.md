@@ -23,7 +23,7 @@ User Request: "Deliver fix for issue #432"
    Output: monitoring_active=true
 
 5. [WAIT] Monitor for reviews/comments
-   Loop every 2 minutes:
+   Loop every 3 minutes:
    - Check for new reviews
    - Check for new comments
    - Check CI status
@@ -43,7 +43,8 @@ User Request: "Deliver fix for issue #432"
    Output: merged=true
 
 8. CLEANUP worktree
-   Command: remove .worktrees/fix-issue-432
+   Command: `git worktree remove .worktrees/fix-issue-432`
+   (Run only after PR state is MERGED. If the tree is dirty, report and stop — do not use --force.)
 
 9. REPORT completion
    "✅ DELIVERY COMPLETE - PR #576 merged"
@@ -184,7 +185,7 @@ User Request: "Check on my open PRs"
    - Waiting for review > 24h → Ping reviewer
    - CI failing → Dispatch fix
    - Merge conflicts → Dispatch fix
-   - Approved but not merged → Merge now
+   - Approved but not merged → Verify CI passing, no conflicts, issue linked → dispatch pr-merger
 
 4. TAKE ACTION on each
 

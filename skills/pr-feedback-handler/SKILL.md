@@ -16,6 +16,10 @@ gh pr view <branch> --json comments,reviews --jq '{
   comments: [.comments[] | {author: .author.login, body: .body, createdAt: .createdAt}],
   reviews: [.reviews[] | {author: .author.login, body: .body, state: .state}]
 }'
+
+# Inline review comments (not available via gh pr view)
+gh api "repos/{owner}/{repo}/pulls/<pr-number>/comments" --paginate \
+  --jq '.[] | {author: .user.login, path: .path, line: .line, body: .body, in_reply_to_id: .in_reply_to_id}'
 ```
 
 ### Step 2: Analyze Each Comment
@@ -46,23 +50,32 @@ For every comment, determine:
 ```bash
 cd <worktree-path>
 
-# Checkout branch
-git checkout <branch-name>
+# The worktree is already on the PR branch — verify, never switch:
+current=$(git rev-parse --abbrev-ref HEAD)
+[ "$current" = "<branch-name>" ] || { echo "Wrong worktree: on $current"; exit 1; }
 
 # Implement fix based on comment
 # <edit files per comment instructions>
 
-# Test the fix
-npm test
+# Test the fix — detect the project's runner
+if [ -f package.json ]; then
+  if [ -f pnpm-lock.yaml ]; then pnpm test
+  elif [ -f yarn.lock ]; then yarn test
+  elif [ -f bun.lockb ] || [ -f bun.lock ]; then bun test
+  else npm test; fi
+elif [ -f pyproject.toml ] || [ -f requirements.txt ]; then pytest
+elif [ -f go.mod ]; then go test ./...
+else echo "No test runner detected — report to the orchestrator before committing"; fi
 
 # Commit with reference to comment
-git add .
+git add <files-changed-by-this-fix>   # never `git add .`
+git diff --cached --stat   # confirm only intended files
 git commit -m "Fix: <brief description>
 
-Addressing feedback from <commenter>
+Addressing feedback from @<commenter>
 - <specific change made>
 
-Refs: PR <number>"
+Refs: PR #<number>"
 
 # Push update
 git push origin <branch-name>
@@ -80,13 +93,19 @@ gh pr comment <pr-number> --body "@$(cat <<'EOF'
 <context or trade-off details>
 EOF
 )"
+
+# To reply in-thread instead, use the GraphQL API:
+# gh api graphql -f query='mutation($id: ID!, $body: String!) {
+#   addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id, body:$body}) { comment { url } } }' \
+#   -F id="<THREAD_NODE_ID>" -f body="@user<reply>"
 ```
 
 ### Step 4: Resolve Thread (if applicable)
 
 ```bash
-# Mark comment as resolved via GitHub API or UI
-# Note: gh CLI may not support direct resolve, document for manual resolution
+gh api graphql -f query='
+mutation($id: ID!) { resolveReviewThread(input: {threadId: $id}) { thread { isResolved } } } }' \
+  -F id="<THREAD_NODE_ID>"
 ```
 
 ### Step 5: Check for More Comments
@@ -96,7 +115,7 @@ EOF
 gh pr view <branch> --json comments --jq '.comments | length'
 ```
 
-### Step 6: Report to Super Agent
+### Step 6: Report to the Orchestrating Agent
 
 Return structured result:
 
@@ -112,7 +131,7 @@ PR Feedback Processed:
 Next steps:
 - Monitor for additional comments
 - Await reviewer re-review
-- Super agent will continue monitoring
+- The orchestrating agent will continue monitoring
 ```
 
 ## Decision Matrix
@@ -143,19 +162,20 @@ Next steps:
 - "nit", "optional", "thought"
 - "out of scope", "future", "separate PR"
 
+Comments marked "nit" or "optional" are **Type B (Reply)** unless the reviewer
+explicitly asked for a specific mechanical fix.
+
 ## Error Handling
 
-**If fix conflicts with main:**
+**If fix conflicts with the base branch:**
 
-- Pull latest main: `git pull origin main`
-- Resolve conflicts
-- Re-run tests
-- Push fixed commit
+- Fetch and merge the base branch: `git fetch origin && git merge origin/<default-branch>`
+  (resolve conflicts, re-run tests, then `git push origin <branch-name>`)
 
 **If comment is unclear:**
 
 - Reply asking for clarification
-- Document unclear comment for super agent
+- Document unclear comment for the orchestrating agent
 - Do NOT guess - get clarity first
 
 **If fix requires major refactor:**
@@ -169,7 +189,7 @@ Next steps:
 
 **Called by:**
 
-- Super orchestrator when comments detected
+- The orchestrating agent when comments detected
 - pr-opener workflow (after 3 min wait)
 - Scheduled monitoring job
 
@@ -180,4 +200,9 @@ Next steps:
 
 **Reports to:**
 
-- Super agent for workflow status
+- The orchestrating agent for workflow status
+
+## References
+
+- [Acceptance Criteria](references/acceptance-criteria.md) - Classification rules, commit/reply formats, error-handling scenarios
+- [Best Practices](references/best-practices.md) - Decision tree, reply templates, tone guidance

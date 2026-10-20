@@ -23,17 +23,20 @@ gh pr view <pr-number> --json files --jq '.files[] | {path: .path, additions: .a
 For each file changed:
 
 ```bash
-# Get the diff
-gh pr diff <pr-number> --path <file-path>
+# Get the full PR diff (patch format)
+gh pr diff <pr-number> --patch
 
-# Or view full PR diff
-gh pr diff <pr-number>
+# Or get per-file patches via the API (gh only expands {owner}/{repo}/{branch})
+gh api "repos/{owner}/{repo}/pulls/<pr-number>/files" \
+  --jq '.[] | {filename, additions, deletions, patch}'
 ```
 
 **Analysis dimensions:**
 
+Only apply framework-specific checks when the repo uses that stack (e.g. skip the React items in a Python repo).
+
 1. **Code Quality**
-  - Type safety and proper TypeScript usage
+  - Type safety and proper usage of the repo's language (e.g. TypeScript)
   - Error handling coverage
   - Test coverage for new code
   - Code duplication
@@ -61,7 +64,7 @@ gh pr diff <pr-number>
 **Comment format:**
 
 ```markdown
-**[Severity: HIGH/MEDIUM/LOW] [Category: Security/Quality/Performance/Best Practice]**
+**[Severity: HIGH/MEDIUM/LOW] [Category: Security/Quality/Performance/Testing/Documentation/Architecture/Maintainability/Compatibility]**
 
 **Issue:** Brief description of the problem
 
@@ -82,14 +85,21 @@ gh pr diff <pr-number>
 
 ```
 
+**Category taxonomy (shared with pr-commenter)**: `Security, Quality, Performance, Testing, Documentation, Architecture, Maintainability, Compatibility`
+
 ### Step 4: Post Review
 
+`--comment`, `--approve` and `--request-changes` are mutually exclusive; pick exactly one to match the assessment.
+
 ```bash
-# Post structured review
-gh pr review <pr-number> --comment --body "$(cat <<'EOF'
+# Choose the flag from the assessment (exactly one):
+#   APPROVE         -> gh pr review <pr-number> --approve --body "…"
+#   REQUEST CHANGES -> gh pr review <pr-number> --request-changes --body "…"
+#   COMMENT         -> gh pr review <pr-number> --comment --body "…"
+gh pr review <pr-number> --request-changes --body "$(cat <<'EOF'
 ## Code Review Summary
 
-**Overall assessment:** [APPROVE / REQUEST CHANGES / COMMENT]
+**Overall assessment:** [APPROVED / CHANGES_REQUESTED / COMMENTED]
 
 **Key findings:**
 - <N> security issues
@@ -134,7 +144,11 @@ Review Complete:
     Security: <N>
     Quality: <N>
     Performance: <N>
-    Best Practice: <N>
+    Testing: <N>
+    Documentation: <N>
+    Architecture: <N>
+    Maintainability: <N>
+    Compatibility: <N>
   Blocking Issues: <N>
   Non-Blocking: <N>
   Action: <proceed / fix_required / needs_discussion>
@@ -211,7 +225,7 @@ Review Complete:
 
 **Calls to:**
 
-- pr-commenter (to post individual line comments)
+- pr-commenter (posts line-level comments via the GitHub REST API — see pr-commenter)
 - GitHub CLI for review submission
 
 **Reports to:**
@@ -222,14 +236,14 @@ Review Complete:
 ## Example Commands
 
 ```
-# Review single PR
-@super Review PR #277
+# Review a single PR
+Review PR #277
 
-# Review with focus
-@super Review PR #278 for security issues
+# Review with a specific focus
+Review PR #278, focusing on security issues
 
 # Batch review
-@super Review all open PRs
+Review all open PRs
 ```
 
 ## Automated Review Patterns
@@ -237,18 +251,16 @@ Review Complete:
 ### Pattern 1: Security Scan
 
 ```bash
-# Check for secrets
-grep -i "password\|secret\|key\|token" <diff> | grep -v "test\|mock"
-
-# Check for SQL injection risk
-grep -E "\$\{.*\}" <diff> | grep -i "query\|sql"
+gh pr diff <pr-number> --patch > /tmp/pr.diff
+grep -inE "(password|secret|api[_-]?key|token)\s*[:=]\s*['\"][^'\"]{8,}" /tmp/pr.diff
 ```
 
 ### Pattern 2: Type Safety Check
 
 ```bash
-# Run TypeScript check
-cd <worktree> && npx tsc --noEmit
+# Worktree path convention (owned by pr-worktree):
+WORKTREE_PATH=".worktrees/fix-issue-432-button-rendering"
+cd "${WORKTREE_PATH}" && npx tsc --noEmit
 
 # Report type errors as review comments
 ```
@@ -257,7 +269,13 @@ cd <worktree> && npx tsc --noEmit
 
 ```bash
 # Run tests with coverage
-cd <worktree> && npm test -- --coverage
+WORKTREE_PATH=".worktrees/fix-issue-432-button-rendering"
+cd "${WORKTREE_PATH}" && npm test -- --coverage
 
 # Flag files with <80% coverage
 ```
+
+## References
+
+- [Acceptance Criteria](references/acceptance-criteria.md) — Required output format and validation scenarios
+- [Best Practices](references/best-practices.md) — Review mindset, comment guidelines, severity assignment

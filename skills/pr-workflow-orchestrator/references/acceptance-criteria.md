@@ -21,9 +21,9 @@
 - [ ] All review feedback resolved
 - [ ] CI status: passing
 - [ ] No merge conflicts
-- [ ] Minimum 1 approval (or auto-approve criteria met)
+- [ ] Minimum 1 approval from a reviewer with write access
 - [ ] Linked issue properly referenced
-- [ ] No DO-NOT-MERGE or breaking-change labels
+- [ ] No blocking labels present (e.g. `status/blocked`, per pr-labeler's label standards)
 - [ ] Worktree cleaned up after merge
 
 ## Orchestration Patterns
@@ -39,16 +39,12 @@ pr-worktree (x3) → pr-opener (x3) → pr-feedback-handler (x3) → pr-merger (
 ```
 
 ### Continuous Monitoring Loop
-```javascript
-while (pr.state !== 'merged' && pr.state !== 'closed') {
-  checkForNewReviews();
-  checkForNewComments();
-  checkCIStatus();
-  checkMergeableStatus();
-  dispatchFeedbackHandlerIfNeeded();
-  sleep(2 minutes);
-}
-```
+Re-check the PR every 3 minutes. At each tick run:
+- `gh pr view <number> --json state,mergeStateStatus,statusCheckRollup,reviewDecision`
+- `gh pr view <number> --json reviews,comments`
+- `gh api "repos/{owner}/{repo}/pulls/<number>/comments" --paginate --jq '.[] | {author: .user.login, path: .path, line: .line, body: .body}'`
+
+If new reviews or comments appeared, dispatch pr-feedback-handler. Exit the loop when state is MERGED or CLOSED.
 
 ## Error Handling
 
@@ -59,7 +55,7 @@ while (pr.state !== 'merged' && pr.state !== 'closed') {
 
 ### If pr-feedback-handler fails
 - MUST NOT abandon PR
-- Escalate to super orchestrator
+- Escalate to the orchestrating agent
 - Document failure reason
 - Assign alternative handler
 

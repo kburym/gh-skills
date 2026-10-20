@@ -35,7 +35,7 @@ Examples:
 .worktrees/pr-<number>-<contributor>-<description>
 
 # Hotfixes (keep separate from regular work)
-.worktrees/hotfix-<timestamp>-<description>
+.worktrees/hotfix-<issue-or-timestamp>-<description>
 
 # Experiments (disposable)
 .worktrees/exp-<description>-<timestamp>
@@ -59,7 +59,7 @@ cd .worktrees/feature-issue-444-db-check
 cd .worktrees/fix-issue-432-rendering
 
 # Terminal 3 - Hotfix (urgent)
-cd .worktrees/hotfix-security-patch
+cd .worktrees/hotfix-2026-04-01-security-patch
 ```
 
 **By IDE Workspace:**
@@ -73,10 +73,10 @@ cd .worktrees/hotfix-security-patch
 cd .worktrees/feature-issue-444-db-check
 
 # Afternoon: review PR
-.cd .worktrees/pr-500-contributor-fix
+cd .worktrees/pr-500-contributor-fix
 
 # Evening: hotfix
-cd .worktrees/hotfix-security-patch
+cd .worktrees/hotfix-2026-04-01-security-patch
 ```
 
 ### Context Switching Workflow
@@ -106,14 +106,15 @@ git branch -d "${BRANCH_NAME}"
 
 ### Daily Cleanup (End of Day)
 ```bash
-# Check for merged PRs and cleanup
-for wt in $(git worktree list | grep ".worktrees" | awk '{print $1}'); do
-  # Check if branch is merged to main
-  branch=$(git worktree list | grep "$wt" | awk '{print $3}')
-  if git branch -r --merged main | grep "$branch"; then
-    echo "Cleanup: $wt (branch merged)"
+# Daily cleanup: only remove worktrees whose branch is merged into origin/main
+git fetch origin main
+for wt in $(git worktree list --porcelain | awk '/^worktree /{print $2}' | grep '/.worktrees/'); do
+  branch=$(git worktree list --porcelain | awk -v p="$wt" '
+    $1=="worktree"{cur=($2==p)} $1=="branch" && cur{print $2; exit}')
+  [ -n "$branch" ] || continue
+  if git merge-base --is-ancestor "$branch" origin/main; then
     git worktree remove "$wt"
-    git branch -d "$branch"
+    git branch -d "${branch#refs/heads/}"
   fi
 done
 ```
@@ -191,23 +192,28 @@ cd "${WORKTREE_PATH}"
 # ...
 
 # 3. Commit and push
-git add . && git commit -m "address review feedback"
+git add -- "${CHANGED_FILES}"   # explicit paths only
+git commit -m "address review feedback"
 git push origin "${BRANCH_NAME}"
 
 # 4. Reply to comments via pr-feedback-handler
 ```
 
-### With qa
+### With QA/testing
 ```bash
 # Before creating PR:
 cd "${WORKTREE_PATH}"
-qa --path="${WORKTREE_PATH}"
+
+# Run the repo's test suite in the worktree
+# (use the repo's package manager: npm/pnpm/bun/yarn)
 
 # Only if tests pass:
 # → proceed to pr-opener
 # If tests fail:
-# → fix in worktree → re-run qa → repeat
+# → fix in worktree → re-run tests → repeat
 ```
+
+(No dedicated `qa` skill ships with this collection.)
 
 ## Disk Space Management
 
@@ -231,7 +237,10 @@ Add to `.worktrees/.gitignore` (if tracking worktrees):
 */coverage/
 ```
 
+- Add `.worktrees/` to the repo's .gitignore (worktree directories and the manifest are local-only).
+
 ### Cleanup Thresholds
-- Auto-cleanup: PRs merged > 7 days
-- Manual review: PRs merged 3-7 days
+- Immediate cleanup: PR merged → remove the worktree and branch right away
+- Auto-cleanup: merged PRs whose worktree was intentionally kept, > 7 days
+- Manual review: merged PRs whose worktree was intentionally kept, 3-7 days
 - Keep active: In-progress, in-review, hotfixes

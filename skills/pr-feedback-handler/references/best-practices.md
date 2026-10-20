@@ -23,7 +23,7 @@
 
 | Scenario | Action | Reasoning |
 |----------|--------|-----------|
-| "Nit: variable name" | Fix | Low effort, improves readability |
+| "Nit: variable name" | Reply | Non-blocking; confirm intent |
 | "Nit: architecture suggestion" | Reply | May be subjective, discuss first |
 | "Consider adding test" | Fix | Improves coverage, reasonable |
 | "Add more tests" (vague) | Reply | Ask for specifics |
@@ -51,8 +51,8 @@ START
 │  ├─ YES → Type A (Fix)
 │  └─ NO → Continue
 │
-├─ Does comment contain "nit" AND is a simple fix?
-│  ├─ YES → Type A (Fix)
+├─ Does comment contain "nit" or "optional"?
+│  ├─ YES → Type B (Reply)
 │  └─ NO → Continue
 │
 ├─ Does comment ask "why", "what if", "consider"?
@@ -63,9 +63,9 @@ START
 │  ├─ YES → Type B (Reply)
 │  └─ NO → Continue
 │
-├─ Is comment a question without stating a problem?
-│  ├─ YES → Type B (Reply)
-│  └─ NO → Type A (Fix) [Default to fix if unclear]
+├─ Is the comment's intent unclear?
+│  ├─ YES → Type B (Reply asking for clarification) [Do not guess]
+│  └─ NO → Type A (Fix)
 ```
 
 ## Fix Commit Message Conventions
@@ -78,7 +78,7 @@ Addressing feedback from @<commenter>
 - <specific change 1>
 - <specific change 2>
 
-Refs: PR <pr-number>
+Refs: PR #<pr-number>
 ```
 
 ### Good Examples
@@ -249,9 +249,9 @@ if we end up needing this logic elsewhere - just let me know!
 
 ### Example 3: Fix vs Reply - Nitpick Navigation
 **Comment:** "Nit: variable name `data` is too generic"
-**Decision:** ✅ Type A (Fix)
-**Reasoning:** Simple fix, improves code clarity, "nit" is not a blocker but easy to address
-**Action:** Rename `data` to `userProfile`, commit: "Fix: Use descriptive variable name for user profile data"
+**Decision:** ✅ Type B (Reply)
+**Reasoning:** Marked as a nit; non-blocking — confirm intent unless the reviewer explicitly asked for a specific mechanical rename
+**Action:** Reply asking whether to rename it; if the reviewer asked for the rename explicitly, fix it and commit: "Fix: Use descriptive variable name for user profile data"
 
 ### Example 4: Fix vs Reply - Security Suggestion
 **Comment:** "Just a thought - have we considered rate limiting here?"
@@ -315,20 +315,20 @@ Good Action: Reply explaining this will be a separate task
 
 ## Integration Best Practices
 
-### With Super Agent
+### With the Orchestrating Agent
 - ✅ Always report completion status with specific numbers
 - ✅ Flag any comments that couldn't be processed
 - ✅ Escalate security issues immediately
 - ✅ Request worktree recreation if workspace is corrupted
 
 ### With PR-Opener
-- ✅ Wait for pr-opener to signal "3+ minutes elapsed"
+- ✅ Wait for the orchestrator's 3-minute monitoring interval to elapse before processing feedback on a brand new PR
 - ✅ Don't process feedback on brand new PRs (<3 min old)
 - ✅ Coordinate on PR numbering and branch names
 
 ### With Code-Reviewer
 - ✅ Treat code-reviewer agent feedback as high priority
-- ✅ If code-reviewer and human reviewer conflict, escalate to super agent
+- ✅ If code-reviewer and human reviewer conflict, escalate to the orchestrating agent
 - ✅ Document any automated review findings in status report
 
 ## Metrics for Success

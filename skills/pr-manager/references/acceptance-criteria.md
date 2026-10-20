@@ -38,7 +38,8 @@ DoD Compliance: 100% (20/20 issues linked)
 ```
 PR Manager Dashboard
 ═══════════════════════════════════════════
-DoD Compliance: 17/17 PRs (100% ✅)
+Issue Link Compliance: 17/17 PRs (100% ✅)
+DoD Compliance (linked AND merged): 1/17 (6% ⏳)
 
 DoD Summary:
 ✅ Issue Linked + PR Merged: 1
@@ -115,27 +116,9 @@ Done.
 
 ### 3.1 ✅ CORRECT: Priority with DoD Weight
 
-```javascript
-function calculatePriority(pr) {
-  let score = 0;
-  
-  // DoD violation = highest priority
-  if (!pr.hasIssueLink) score += 1000;
-  
-  // Age factor
-  score += daysOpen(pr) * 10;
-  
-  // Category priority
-  if (pr.category === 'INF') score += 100;
-  if (pr.category === 'O1') score += 80;
-  if (pr.category === 'O2') score += 60;
-  
-  // Size factor
-  score -= (pr.linesChanged / 100);
-  
-  return score;
-}
-```
+The priority algorithm is defined in `skills/pr-manager/SKILL.md` → Priority Algorithm (single source of truth).
+
+Default category weights used by that algorithm: `infra` +100, `critical` +80, `high` +60, `normal` +40.
 
 ### 3.2 ✅ CORRECT: Prioritization by Criteria
 
@@ -143,9 +126,14 @@ function calculatePriority(pr) {
 @pr-manager Prioritize PRs by: dod-status
 
 Priority Queue (highest first):
-1. PR #277: MISSING ISSUE (score: 1035) 🔴
-2. PR #278: 5 days old, O1 (score: 130) 🟡
-3. PR #279: 2 days old, O2 (score: 80) 🟢
+
+Rank  Score  PR      Reason
+────  ─────  ──────  ──────────────────────────
+1     1035   #277    Missing issue (BLOCK) — 1000 + 35 age
+2     150    #278    5 days old, infra task — 50 + 100
+3     110    #279    3 days old, critical task — 30 + 80
+4     90     #280    2 days old, critical, 1000 lines — 20 + 80 − 10
+5     50     #281    1 day old, normal task — 10 + 40
 ```
 
 ### 3.3 ❌ INCORRECT: No Priority Strategy
@@ -229,18 +217,19 @@ pr-manager:
 
 ```
 PR Manager Dashboard
-═══════════════════════════════════════════
+══════════════════════════════════════════
 
-DoD Compliance: 17/17 PRs (100% ✅)
+Issue Link Compliance: 17/17 PRs (100% ✅)
+DoD Compliance (linked AND merged): 1/17 (6% ⏳)
 
 Active PRs: 17
 ┌─────────┬───────────────────────────┬──────────────┬─────────┬──────────┐
 │ PR      │ Task                      │ Status       │ Issue   │ DoD      │
 ├─────────┼───────────────────────────┼──────────────┼─────────┼──────────┤
-│ #264    │ INF-1: Tilt Docker        │ ✅ Merged    │ #40     │ ✅ MET   │
-│ #277    │ O2-10: Stripe Payment     │ 🔄 Feedback  │ #41     │ ✅ MET   │
-│ #278    │ O2-11: Payment UI         │ ⏳ Approved   │ #42     │ ✅ MET   │
-│ #279    │ INT-19: Google Calendar   │ 🆕 Open      │ #43     │ ✅ MET   │
+│ #264    │ infra-1: Tilt Docker      │ ✅ Merged    │ #40     │ ✅ MET   │
+│ #277    │ high-10: Stripe Payment   │ 🔄 Feedback  │ #41     │ ⏳ PENDING │
+│ #278    │ high-11: Payment UI       │ ⏳ Approved   │ #42     │ ⏳ PENDING │
+│ #279    │ normal-19: Calendar Sync  │ 🆕 Open      │ #43     │ ⏳ PENDING │
 └─────────┴───────────────────────────┴──────────────┴─────────┴──────────┘
 
 Actions Needed:

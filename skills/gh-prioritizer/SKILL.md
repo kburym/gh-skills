@@ -1,11 +1,6 @@
 ---
 name: gh-prioritizer
-description: |
-  Use when auto-setting priorities for new PRs/Issues in GitHub Projects, batch 
-  updating priorities across project items, prioritizing PRs by size, labels, and 
-  impact, running priority audits, or coordinating priority levels across the 
-  full project board. Integrates with pr-labeler and issue-labeler for complete 
-  priority lifecycle management.
+description: "Use when auto-setting priorities for new PRs/Issues in GitHub Projects, batch updating priorities across project items, prioritizing PRs by size, labels, and impact, running priority audits, or coordinating priority levels across the full project board. Integrates with pr-labeler (and optionally the external issue-labeler skill, which is not part of this collection) for complete priority lifecycle management."
 ---
 # GitHub Prioritizer
 
@@ -79,6 +74,35 @@ Priority detected based on:
 
 See [Priority Detection Rules](references/priority-detection-rules.md) for complete algorithm.
 
+## GitHub CLI Commands
+
+All `gh project` commands require `--owner` (use `"@me"` for the current user) and `--format json` for machine-readable output.
+
+```bash
+# List projects
+gh project list --owner "<owner>" --format json
+
+# List the fields of a project (need the field id and option ids to set a value)
+gh project field-list <project-number> --owner "<owner>" --format json
+
+# Create a Priority single-select field with the collection-standard options
+gh project field-create <project-number> --owner "<owner>" \
+  --name "Priority" --data-type "SINGLE_SELECT" \
+  --single-select-options "P0-Critical,P1-High,P2-Medium,P3-Low"
+
+# List the items of a project
+gh project item-list <project-number> --owner "<owner>" --format json
+
+# Add an issue or PR to a project
+gh project item-add <project-number> --owner "<owner>" \
+  --url "https://github.com/<owner>/<repo>/issues/42"
+
+# Read PR size for the detection rules
+gh pr view <number> --json additions,deletions --jq '.additions + .deletions'
+```
+
+Setting a field value requires the GraphQL `updateProjectV2ItemFieldValue` mutation — see the gh-project-orchestrator skill for the working query.
+
 ## Examples
 
 ### Example 1: Set Priority for Hotfix
@@ -128,7 +152,7 @@ gh-prioritizer report --project 1
 
 - pr-manager (for priority-based orchestration)
 - pr-labeler (after labeling completes)
-- issue-labeler (for issue priority sync)
+- issue-labeler (optional, external — not part of this collection) (for issue priority sync)
 - User (manual priority management)
 
 **Calls to**:
@@ -139,7 +163,7 @@ gh-prioritizer report --project 1
 **Coordinates with**:
 
 - pr-labeler (labels inform priority detection)
-- issue-labeler (sync priority across linked items)
+- issue-labeler (optional, external — not part of this collection) (sync priority across linked items)
 - pr-manager (priority drives PR queue order)
 
 ## References
