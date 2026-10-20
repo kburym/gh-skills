@@ -73,8 +73,8 @@ cd <worktree-path>
 current=$(git rev-parse --abbrev-ref HEAD)
 [ "$current" = "<branch-name>" ] || { echo "Wrong worktree: on $current"; exit 1; }
 
-# Implement fix based on comment
-# <edit files per comment instructions>
+# Implement the fix for the reported problem
+# <edit only the files in scope for this fix>
 
 # Test the fix — detect the project's runner
 if [ -f package.json ]; then

@@ -38,7 +38,7 @@ gh api "repos/{owner}/{repo}/pulls/<pr-number>/comments" \
 
 ### Step 1: Prepare Comment Content
 
-**Format based on comment type:**
+**Format per comment type:**
 
 **Line-level comment (on specific code):**
 ```markdown
