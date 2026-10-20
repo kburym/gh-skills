@@ -218,6 +218,30 @@ for (const name of skillNames) {
   }
 }
 
+// ------------------------------------------------- no stray SKILL.md files
+
+// A `SKILL.md` outside skills/ is picked up by installers as a real skill
+// (the skills CLI found template/SKILL.md as a 13th skill called
+// "template-skill"). Keep templates out of the way.
+function findStraySkillFiles(dir) {
+  const found = [];
+  const skip = new Set([".git", "node_modules", ".github", ".worktrees"]);
+  for (const entry of readdirSync(dir)) {
+    if (skip.has(entry)) continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      found.push(...findStraySkillFiles(full));
+    } else if (entry === "SKILL.md" && !full.startsWith(SKILLS_DIR)) {
+      found.push(full.slice(ROOT.length + 1));
+    }
+  }
+  return found;
+}
+
+for (const stray of findStraySkillFiles(ROOT)) {
+  fail(stray, "SKILL.md outside skills/ — installers will treat it as a real skill (use a different filename)");
+}
+
 // ---------------------------------------------------------------- README
 
 const readmePath = join(ROOT, "README.md");

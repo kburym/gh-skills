@@ -29,7 +29,7 @@ skills/
   pr-opener/… pr-reviewer/… pr-feedback-handler/… pr-commenter/… pr-labeler/… pr-merger/
   gh-project-orchestrator/… gh-prioritizer/… gh-pr-review-buttons/
 rules/AGENTS.github.md                # drop-in rules for a repo that uses these skills
-template/SKILL.md                     # starting point for a new skill
+template/skill-template.md          # starting point for a new skill
 docs/                                 # creating skills, agent support, troubleshooting
 assets/                               # the animated diagrams (Graphviz source + SVG)
 scripts/validate-skills.mjs           # the linter CI runs

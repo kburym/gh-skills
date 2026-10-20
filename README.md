@@ -46,7 +46,7 @@ own marketplace](#use-it-your-way).
 
 ## This is the autonomous brain for GitHub maintainers
 
-A maintainer with an active repo — think a project like [OpenClaw](https://github.com/odykyi/openclaw) or any fast-moving OSS project — does not have a "write some code" problem. The problem is **the queue**: 30 open PRs, 4 reviewers who never respond, CI that flickers, a branch that drifted, a contributor who left three review comments unanswered, a release branch waiting on two of them.
+A maintainer with an active repo — think a project like [OpenClaw](https://github.com/openclaw/openclaw) or any fast-moving OSS project — does not have a "write some code" problem. The problem is **the queue**: 30 open PRs, 4 reviewers who never respond, CI that flickers, a branch that drifted, a contributor who left three review comments unanswered, a release branch waiting on two of them.
 
 That queue is a loop, and loops are exactly what agents are good at. `gh-skills` encodes that loop as a set of verifiable procedures:
 
@@ -78,11 +78,15 @@ A pull request is a production line. `pr-workflow-orchestrator` is the line
 manager, every skill is a station, and the numbers below are how long a
 station usually takes.
 
-<details>
+<details open>
 <summary><strong>Show the skill-by-skill call map</strong> (animated)</summary>
 
+### Every pull request runs the same line
+
+*One agent, one worktree, one PR at a time — twenty of them in parallel.*
+
 <p align="center">
-  <img src="assets/skill-calls.svg" alt="gh-skills: which skill calls which, and how long each takes" width="699">
+  <img src="assets/skill-calls.svg" alt="gh-skills: every pull request runs the same line — isolate, build, open, label, pass the checks, get reviewed, handle the feedback, merge, clean up" width="927">
 </p>
 
 </details>
@@ -90,10 +94,14 @@ station usually takes.
 `pr-manager` runs the same line once per PR, in parallel — 20+ lanes at a time.
 
 <details>
-<summary><strong>Show the PR lifecycle flow</strong> (animated)</summary>
+<summary><strong>Show the full lifecycle, from main to merged</strong> (animated)</summary>
+
+### From `main` to merged, without losing a PR on the way
+
+*Twenty lanes, twenty worktrees, zero collisions.*
 
 <p align="center">
-  <img src="assets/pr-lifecycle.svg" alt="gh-skills: PR lifecycle flow — main → parallel tasks → PR → review loop → merge → main" width="667">
+  <img src="assets/pr-lifecycle.svg" alt="gh-skills: PR lifecycle — main, sync, plan, one agent per task, watch, checks, review, handle feedback, merge, clean up, done, and back to main for the next task" width="816">
 </p>
 
 </details>
@@ -203,6 +211,12 @@ In short: these skills turn "the agent touched GitHub" into "the agent ran the w
 
 ```bash
 npx skills add odykyi/gh-skills
+```
+
+**OpenClaw** — the skills CLI lists `openclaw` as a supported agent:
+
+```bash
+npx skills add odykyi/gh-skills --agent openclaw
 ```
 
 **Any agent** — symlink the skills into an agent directory:
@@ -321,8 +335,9 @@ MIT-licensed text — take the form of it that fits your setup.
 | 📦 **Install all 12** | `npx skills add odykyi/gh-skills`, the plugin marketplace, or `install.sh`. |
 | 🧩 **Take just one skill** | Copy `skills/pr-merger/` — or any other folder — into your project. Every skill is self-contained and works on its own. |
 | 🏪 **Host your own marketplace** | Point a `marketplace.json` at your fork and run `/plugin marketplace add <owner>/<repo>`. |
+| 🦞 **Use it from OpenClaw** | `npx skills add odykyi/gh-skills --agent openclaw`, or `install.sh --agent openclaw`. OpenClaw users can also publish to [ClawHub](https://github.com/openclaw/clawhub). |
 | 📐 **Adopt the rules only** | Copy [`rules/AGENTS.github.md`](./rules/AGENTS.github.md) into your repo as `AGENTS.md`. The agent learns *your* conventions — no skills required. |
-| ✍️ **Contribute a skill** | `template/SKILL.md` → `skills/<name>/` → `node scripts/validate-skills.mjs` → open a PR. See [`CONTRIBUTING.md`](./CONTRIBUTING.md). |
+| ✍️ **Contribute a skill** | `template/skill-template.md` → `skills/<name>/` → `node scripts/validate-skills.mjs` → open a PR. See [`CONTRIBUTING.md`](./CONTRIBUTING.md). |
 | 🐛 **Report a broken command** | Open an issue with the exact command and the exact error. This is the most valuable contribution there is — the whole linter exists because of bugs like that. |
 | 🔀 **Run it inside your org** | Fork it, point it at your internal label set and path mappings, host the marketplace on your own infrastructure. |
 | 📖 **Read it first** | [`SPEC.md`](./SPEC.md) is the contract — eight invariants, one page. Then `docs/creating-skills.md` if you want to add one. |

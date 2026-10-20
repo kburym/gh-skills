@@ -34,7 +34,7 @@ other surface (plugin marketplace, `npx skills`, `.agents/skills` symlinks,
 
 ## Adding a skill
 
-1. Copy `template/SKILL.md` to `skills/<name>/SKILL.md`.
+1. Copy `template/skill-template.md` to `skills/<name>/SKILL.md`.
 2. `name` must equal the folder name, lowercase and hyphenated.
 3. The description is the trigger — say what it does **and when** to use it.
 4. Add the skill to `README.md`, `llms.txt` and `.claude-plugin/marketplace.json`.
@@ -52,7 +52,7 @@ See [`docs/creating-skills.md`](./docs/creating-skills.md) for the full checklis
 | `assets/build-diagram.sh` | Renders the diagram and injects the animation |
 | `scripts/validate-skills.mjs` | The linter CI runs |
 | `rules/AGENTS.github.md` | Rules template for repos that use these skills |
-| `template/SKILL.md` | Template for a new skill |
+| `template/skill-template.md` | Template for a new skill |
 | `install.sh` | Symlink installer for any agent |
 | `.claude-plugin/` | Claude Code plugin + marketplace manifests |
 | `docs/` | Creating skills, agent support, troubleshooting |

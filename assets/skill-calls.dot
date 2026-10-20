@@ -1,89 +1,96 @@
-// gh-skills — the factory line: which skill calls which, and how long it takes.
+// gh-skills — the factory: what happens to a pull request, and how long it takes.
 // Render:  ./assets/build-diagram.sh   (dot + animated-SVG injection)
 // Source of truth: this file. The SVG in assets/ is generated from it.
-//
-// A PR is a production line. The orchestrator is the line manager, every
-// skill is a station, and the numbers are how long a station usually takes.
 digraph SKILL_FACTORY {
   rankdir=TB;
   splines=polyline;
-  bgcolor="#ffffff";
-  pad="0.3";
-  nodesep="0.28";
-  ranksep="0.50";
+  bgcolor="transparent";
+  pad="0.35";
+  nodesep="0.34";
+  ranksep="0.62";
+  fontname="Helvetica,Arial,sans-serif";
 
   node [shape=box, style="rounded,filled", fontname="Helvetica,Arial,sans-serif",
-        fontsize=10, fontcolor="#1f2328", color="#4f46e5", fillcolor="#eef2ff",
-        margin="0.12,0.06", height=0.30];
-  edge [color="#4f46e5", fontname="Helvetica,Arial,sans-serif", fontsize=8,
-        fontcolor="#57606a", arrowsize=0.6];
+        fontsize=13, fontcolor="#111827", color="#4F46E5", fillcolor="#EEF2FF",
+        penwidth=1.6, margin="0.16,0.10"];
+  edge [color="#9CA3AF", fontname="Helvetica,Arial,sans-serif", fontsize=10,
+        fontcolor="#6B7280", arrowsize=0.7, penwidth=1.2];
 
   // ---------------- intake ----------------
-  queue [label="Issue queue\nready tasks", shape=note, fillcolor="#fef3c7",
-         color="#b45309"];
-  mgr   [class="pulse", label="pr-manager\nspawns one lane per PR\n~1s", shape=box3d,
-         fillcolor="#f5f3ff", color="#7c3aed"];
-  orch  [class="pulse", label="pr-workflow-orchestrator\nthe line manager\n~1s",
-         shape=box3d, fillcolor="#f5f3ff", color="#7c3aed"];
-
-  queue -> mgr [label="20+ lanes"];
-  mgr -> orch;
+  queue [label=<<b>Your queue</b><br/><font point-size="10" color="#B45309">30 open PRs</font>>,
+         shape=note, fillcolor="#FEF3C7", color="#D97706", penwidth=1.8];
+  mgr   [label=<<b>pr-manager</b><br/><font point-size="10" color="#6D28D9">one lane per PR · ~1s</font>>,
+         shape=box3d, fillcolor="#F5F3FF", color="#7C3AED"];
+  orch  [label=<<b>pr-workflow-orchestrator</b><br/><font point-size="10" color="#6D28D9">the line manager · ~1s</font>>,
+         shape=box3d, fillcolor="#F5F3FF", color="#7C3AED"];
 
   // side stations that feed the queue
-  proj [label="gh-project-orchestrator\nepic + tasks\n~10s", fillcolor="#ecfdf5",
-         color="#059669"];
-  prio [label="gh-prioritizer\nboard priorities\n~10s", fillcolor="#ecfdf5",
-         color="#059669"];
-  proj -> queue [style=dashed, color="#059669", fontcolor="#059669"];
-  prio -> queue [style=dashed, color="#059669", fontcolor="#059669"];
+  proj [label=<<b>gh-project-orchestrator</b><br/><font point-size="10" color="#047857">epics + tasks · ~10s</font>>,
+        fillcolor="#ECFDF5", color="#059669"];
+  prio [label=<<b>gh-prioritizer</b><br/><font point-size="10" color="#047857">what is urgent · ~10s</font>>,
+        fillcolor="#ECFDF5", color="#059669"];
+  btns [label=<<b>gh-pr-review-buttons</b><br/><font point-size="10" color="#4B5563">AI review badges · one-time</font>>,
+        fillcolor="#F3F4F6", color="#9CA3AF"];
 
   // ---------------- the line ----------------
   subgraph cluster_lane {
-    label="PR lane - one per pull request";
-    fontname="Helvetica,Arial,sans-serif"; fontsize=10; fontcolor="#57606a";
-    color="#d0d7de"; style="rounded,dashed"; bgcolor="#fafbfc";
+    label=<<b>One pull request, start to finish</b>>;
+    fontname="Helvetica,Arial,sans-serif"; fontsize=12; fontcolor="#374151";
+    color="#E5E7EB"; style="rounded,dashed"; penwidth=1.4; bgcolor="#FAFAFB";
 
-    wt    [label="pr-worktree\nisolated worktree\n~5s", fillcolor="#fff7ed", color="#c2410c"];
-    impl  [label="implement\nthe agent writes code\n~1-30m", fillcolor="#fff7ed", color="#c2410c"];
-    open  [label="pr-opener\npush + PR + issue link\n~10s", fillcolor="#fff7ed", color="#c2410c"];
-    lab   [label="pr-labeler\ntype + size + team\n~5s", fillcolor="#fff7ed", color="#c2410c"];
-    ci    [class="pulse", label="CI checks\n~60s", shape=diamond, fillcolor="#fef9c3",
-           color="#a16207", width=1.0, height=0.8];
-    rev   [class="pulse", label="pr-reviewer\nreview comments\n~60s", shape=diamond,
-           fillcolor="#fef9c3", color="#a16207", width=1.0, height=0.8];
-    fb    [class="pulse", label="pr-feedback-handler\nfix or reply\n~30s",
-           fillcolor="#fee2e2", color="#dc2626"];
-    cmt   [label="pr-commenter\npost + thread reply\n~10s", fillcolor="#fee2e2", color="#dc2626"];
-    mrg   [class="pulse", label="pr-merger\nverify + merge\n~15s", shape=box3d,
-           fillcolor="#ecfdf5", color="#059669"];
-    clean [class="pulse", label="cleanup\nworktree + branch\n~5s", fillcolor="#ecfdf5",
-           color="#059669"];
-    done  [class="pulse", label="merged\nDefinition of Done\nissue linked + merged",
-           shape=octagon, fillcolor="#d1fae5", color="#059669", fontcolor="#065f46"];
+    wt    [label=<<b>Isolate the work</b><br/><font point-size="10" color="#9A3412">pr-worktree · ~5s</font>>,
+           fillcolor="#FFF7ED", color="#F97316"];
+    impl  [label=<<b>Write the code</b><br/><font point-size="10" color="#9A3412">the agent · 1-30m</font>>,
+           fillcolor="#FFF7ED", color="#F97316"];
+    open  [label=<<b>Open the PR</b><br/><font point-size="10" color="#9A3412">pr-opener · ~10s</font>>,
+           fillcolor="#FFF7ED", color="#F97316"];
+    lab   [label=<<b>Label it right</b><br/><font point-size="10" color="#9A3412">pr-labeler · ~5s</font>>,
+           fillcolor="#FFF7ED", color="#F97316"];
+    ci    [class="pulse", label=<<b>Pass the checks</b><br/><font point-size="10" color="#92400E">CI · ~60s</font>>,
+           shape=diamond, fillcolor="#FEF9C3", color="#EAB308", penwidth=1.8];
+    rev   [class="pulse", label=<<b>Get reviewed</b><br/><font point-size="10" color="#92400E">pr-reviewer · ~60s</font>>,
+           shape=diamond, fillcolor="#FEF9C3", color="#EAB308", penwidth=1.8];
+    fb    [class="pulse", label=<<b>Handle the feedback</b><br/><font point-size="10" color="#991B1B">pr-feedback-handler · ~30s</font>>,
+           fillcolor="#FEE2E2", color="#EF4444"];
+    cmt   [label=<<b>Answer in thread</b><br/><font point-size="10" color="#991B1B">pr-commenter · ~10s</font>>,
+           fillcolor="#FEE2E2", color="#EF4444"];
+    mrg   [class="pulse", label=<<b>Merge safely</b><br/><font point-size="10" color="#047857">pr-merger · ~15s</font>>,
+           shape=box3d, fillcolor="#ECFDF5", color="#10B981"];
+    clean [class="pulse", label=<<b>Clean up</b><br/><font point-size="10" color="#047857">worktree + branch · ~5s</font>>,
+           fillcolor="#ECFDF5", color="#10B981"];
+    done  [class="pulse", label=<<b>Shipped</b><br/><font point-size="10" color="#065F46">issue linked + merged</font>>,
+           shape=octagon, fillcolor="#D1FAE5", color="#10B981", penwidth=2];
 
     wt -> impl -> open -> lab -> ci -> rev;
-    rev -> fb [label="changes requested", color="#dc2626", fontcolor="#dc2626"];
-    rev -> cmt [label="comment", color="#dc2626", fontcolor="#dc2626"];
-    cmt -> fb [style=dashed, color="#dc2626"];
-    ci  -> fb [label="failing", color="#dc2626", fontcolor="#dc2626"];
-    fb  -> impl [label="fix + push ~30s", style=dashed, color="#dc2626",
-                 fontcolor="#dc2626", constraint=false];
-    fb  -> mrg [label="approved"];
+    rev -> fb [label=" changes requested ", color="#DC2626", fontcolor="#DC2626"];
+    rev -> cmt [label=" comment ", color="#DC2626", fontcolor="#DC2626"];
+    cmt -> fb [style=dashed, color="#F87171"];
+    ci  -> fb [label=" failing ", color="#DC2626", fontcolor="#DC2626"];
+    fb  -> impl [label=" fix and push ", style=dashed, color="#EF4444", fontcolor="#DC2626",
+                 constraint=false];
+    fb  -> mrg [label=" approved "];
     mrg -> clean -> done;
 
-    // station ranks inside the lane
-                      }
+    // stage ranks inside the line
+                      { rank=same; done; }
+  }
 
-  orch -> wt [label="dispatch"];
+  // ---------------- the promise ----------------
+  promise [label=<<font point-size="11" color="#047857"><b>Every PR ends the same way:</b></font><br/><font point-size="10" color="#065F46">issue linked · CI green · approved · merged · worktree removed</font>>,
+            shape=plaintext, fillcolor="none", color="none"];
 
-  // one-time station
-  btns [label="gh-pr-review-buttons\none-time setup\n~60s", fillcolor="#f3f4f6",
-         color="#6b7280"];
-  btns -> open [style=dashed, color="#6b7280", fontcolor="#6b7280",
-                label="badges on the PR body"];
+  // ---------------- edges ----------------
+  queue -> mgr [label=" 20+ lanes "];
+  mgr -> orch;
+  orch -> wt [label=" dispatch "];
+  proj -> queue [style=dashed, color="#10B981", fontcolor="#047857"];
+  prio -> queue [style=dashed, color="#10B981", fontcolor="#047857"];
+  btns -> open [style=dashed, color="#9CA3AF", fontcolor="#6B7280", label=" badges on the PR "];
+  done -> promise [style=invis];
 
   // ---------------- ranks ----------------
   { rank=same; queue; proj; prio; btns; }
   { rank=same; mgr; }
   { rank=same; orch; }
+  { rank=same; promise; }
 }

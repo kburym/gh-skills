@@ -12,6 +12,7 @@ Claude-only layout.
 | Codex, generic agents | `.agents/skills/` (global: `~/.agents/skills/`) |
 | Cursor | `.cursor/skills/` |
 | opencode | `.opencode/skills/` (global: `~/.config/opencode/skills/`) |
+| OpenClaw | `.openclaw/skills/` |
 | Claude Code plugin | installed via the marketplace — no directory to manage |
 
 `install.sh` knows all of these:
@@ -25,6 +26,9 @@ curl -fsSL https://raw.githubusercontent.com/odykyi/gh-skills/main/install.sh | 
 
 # opencode, project scope
 curl -fsSL https://raw.githubusercontent.com/odykyi/gh-skills/main/install.sh | sh -s -- --agent opencode --project
+
+# OpenClaw, project scope
+curl -fsSL https://raw.githubusercontent.com/odykyi/gh-skills/main/install.sh | sh -s -- --agent openclaw --project
 ```
 
 The installer only ever creates **symlinks**. It never copies markdown, never
@@ -46,8 +50,12 @@ Or browse it in Claude Code with `Browse and install plugins`.
 ```bash
 npx skills add odykyi/gh-skills            # install into the detected agent
 npx skills add odykyi/gh-skills --list     # show what is available
+npx skills add odykyi/gh-skills --agent openclaw   # install into OpenClaw
 npx skills use odykyi/gh-skills/pr-merger  # generate a prompt without installing
 ```
+
+OpenClaw users can also publish to [ClawHub](https://github.com/openclaw/clawhub),
+the OpenClaw skill and plugin registry.
 
 ## Other agents
 

@@ -8,7 +8,7 @@ AGENT=""
 SCOPE="project"
 
 usage() {
-  echo "usage: install.sh [--agent claude|codex|opencode|cursor|agents] [--global|--project]" >&2
+  echo "usage: install.sh [--agent claude|codex|opencode|openclaw|cursor|agents] [--global|--project]" >&2
   echo "" >&2
   echo "  --agent   which agent directory to link into" >&2
   echo "  --global  install into the user home directory (default: project)" >&2
@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-case "$AGENT" in ""|claude|codex|opencode|cursor|agents) ;; *) usage ;; esac
+case "$AGENT" in ""|claude|codex|opencode|openclaw|cursor|agents) ;; *) usage ;; esac
 
 # Source: this checkout if run from one, otherwise a cached clone.
 SELF_DIR=""
@@ -60,6 +60,7 @@ agent_dir() {
     agents:*|codex:*) echo ".agents/skills" ;;
     claude:*)         echo ".claude/skills" ;;
     cursor:*)         echo ".cursor/skills" ;;
+    openclaw:*)       echo ".openclaw/skills" ;;
     opencode:global)  echo ".config/opencode/skills" ;;
     opencode:project) echo ".opencode/skills" ;;
   esac

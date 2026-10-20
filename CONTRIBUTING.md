@@ -11,7 +11,7 @@ Read [`AGENTS.md`](./AGENTS.md) — it is the short version of the rules — and
 
 ## Adding a skill
 
-1. `cp template/SKILL.md skills/<name>/SKILL.md`
+1. `cp template/skill-template.md skills/<name>/SKILL.md`
 2. Write the frontmatter: `name` equals the folder name, `description` says
    what the skill does **and when** to use it.
 3. Write the workflow. Run every command you write. A flag that does not

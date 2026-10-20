@@ -1,54 +1,53 @@
-// gh-skills — PR lifecycle flow
+// gh-skills — the pull request lifecycle, from main to merged.
 // Render:  ./assets/build-diagram.sh   (dot + animated-SVG injection)
 // Source of truth: this file. The SVG in assets/ is generated from it.
-//
-// Laid out top-to-bottom so it stays readable inside a README column:
-// one spine down the middle, the parallel task tree as three side-by-side
-// columns, and the feedback loops as back-edges.
-digraph PR_FLOW {
+digraph PR_LIFECYCLE {
   rankdir=TB;
   splines=polyline;
-  bgcolor="#ffffff";
-  pad="0.3";
-  nodesep="0.30";
-  ranksep="0.42";
+  bgcolor="transparent";
+  pad="0.35";
+  nodesep="0.32";
+  ranksep="0.58";
+  fontname="Helvetica,Arial,sans-serif";
 
   node [shape=box, style="rounded,filled", fontname="Helvetica,Arial,sans-serif",
-        fontsize=10, fontcolor="#1f2328", color="#4f46e5", fillcolor="#eef2ff",
-        margin="0.12,0.06", height=0.30];
-  edge [color="#4f46e5", fontname="Helvetica,Arial,sans-serif", fontsize=8,
-        fontcolor="#57606a", arrowsize=0.6];
+        fontsize=13, fontcolor="#111827", color="#4F46E5", fillcolor="#EEF2FF",
+        penwidth=1.6, margin="0.16,0.10"];
+  edge [color="#9CA3AF", fontname="Helvetica,Arial,sans-serif", fontsize=10,
+        fontcolor="#6B7280", arrowsize=0.7, penwidth=1.2];
 
-  // ---------------- spine ----------------
-  main   [label="main", shape=circle, fixedsize=true, width=0.72, height=0.72,
-          fillcolor="#d1fae5", color="#059669", fontcolor="#065f46", penwidth=2];
-  sync   [label="git fetch origin\nresolve default branch"];
-  plan   [class="pulse", label="pr-manager: plan + prioritize\n(20+ PRs)", shape=box3d,
-          fillcolor="#f5f3ff", color="#7c3aed"];
-  fanout [class="pulse", label="dispatch one subagent per PR", shape=parallelogram,
-          fillcolor="#f5f3ff", color="#7c3aed"];
-  issue  [label="no issue?\ncreate + link\n(DoD gate)", fillcolor="#fef3c7", color="#b45309"];
+  // ---------------- the starting point ----------------
+  main [label=<<b>main</b>>, shape=circle, fixedsize=true, width=0.9, height=0.9,
+        fillcolor="#D1FAE5", color="#10B981", fontcolor="#065F46", penwidth=2.2];
+  sync [label=<<b>Sync with the base branch</b><br/><font point-size="10" color="#6B7280">never touch the main checkout</font>>,
+        fillcolor="#F9FAFB", color="#9CA3AF"];
+  plan [label=<<b>pr-manager</b><br/><font point-size="10" color="#6D28D9">plan and prioritise · ~1s</font>>,
+        shape=box3d, fillcolor="#F5F3FF", color="#7C3AED"];
+  fanout [label=<<b>One agent per task</b><br/><font point-size="10" color="#6D28D9">20+ lanes in parallel</font>>,
+          shape=parallelogram, fillcolor="#F5F3FF", color="#7C3AED"];
+  issue [label=<<b>No issue yet?</b><br/><font point-size="10" color="#92400E">create and link it</font>>,
+         fillcolor="#FEF3C7", color="#EAB308"];
 
-  // ---------------- parallel task tree (three columns) ----------------
+  // ---------------- parallel work ----------------
   subgraph cluster_tasks {
-    label="parallel sub-sessions — one per task";
-    fontname="Helvetica,Arial,sans-serif"; fontsize=10; fontcolor="#57606a";
-    color="#d0d7de"; style="rounded,dashed"; bgcolor="#fafbfc";
+    label=<<b>Twenty lanes, twenty worktrees, zero collisions</b>>;
+    fontname="Helvetica,Arial,sans-serif"; fontsize=12; fontcolor="#374151";
+    color="#E5E7EB"; style="rounded,dashed"; penwidth=1.4; bgcolor="#FAFAFB";
 
-    a_wt   [label="pr-worktree\nfix-issue-432", fillcolor="#fff7ed", color="#c2410c"];
-    a_impl [label="implement", fillcolor="#fff7ed", color="#c2410c"];
-    a_test [label="run tests", fillcolor="#fff7ed", color="#c2410c"];
-    a_pr   [label="PR #101\nissue linked", fillcolor="#ecfdf5", color="#059669"];
+    a_wt   [label=<<b>Isolate</b><br/><font point-size="10" color="#9A3412">pr-worktree</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    a_impl [label=<<b>Build</b><br/><font point-size="10" color="#9A3412">the agent</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    a_test [label=<<b>Test</b><br/><font point-size="10" color="#9A3412">repo suite</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    a_pr   [label=<<b>PR #101</b><br/><font point-size="10" color="#047857">issue linked</font>>, fillcolor="#ECFDF5", color="#10B981"];
 
-    b_wt   [label="pr-worktree\nfeature-issue-444", fillcolor="#fff7ed", color="#c2410c"];
-    b_impl [label="implement", fillcolor="#fff7ed", color="#c2410c"];
-    b_test [label="run tests", fillcolor="#fff7ed", color="#c2410c"];
-    b_pr   [label="PR #102\nissue linked", fillcolor="#ecfdf5", color="#059669"];
+    b_wt   [label=<<b>Isolate</b><br/><font point-size="10" color="#9A3412">pr-worktree</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    b_impl [label=<<b>Build</b><br/><font point-size="10" color="#9A3412">the agent</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    b_test [label=<<b>Test</b><br/><font point-size="10" color="#9A3412">repo suite</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    b_pr   [label=<<b>PR #102</b><br/><font point-size="10" color="#047857">issue linked</font>>, fillcolor="#ECFDF5", color="#10B981"];
 
-    c_wt   [label="pr-worktree\nrefactor-issue-445", fillcolor="#fff7ed", color="#c2410c"];
-    c_impl [label="implement", fillcolor="#fff7ed", color="#c2410c"];
-    c_test [label="run tests", fillcolor="#fff7ed", color="#c2410c"];
-    c_pr   [label="PR #103\nissue linked", fillcolor="#ecfdf5", color="#059669"];
+    c_wt   [label=<<b>Isolate</b><br/><font point-size="10" color="#9A3412">pr-worktree</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    c_impl [label=<<b>Build</b><br/><font point-size="10" color="#9A3412">the agent</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    c_test [label=<<b>Test</b><br/><font point-size="10" color="#9A3412">repo suite</font>>, fillcolor="#FFF7ED", color="#F97316"];
+    c_pr   [label=<<b>PR #103</b><br/><font point-size="10" color="#047857">issue linked</font>>, fillcolor="#ECFDF5", color="#10B981"];
 
     a_wt -> a_impl -> a_test -> a_pr;
     b_wt -> b_impl -> b_test -> b_pr;
@@ -60,53 +59,57 @@ digraph PR_FLOW {
     { rank=same; a_pr; b_pr; c_pr; }
   }
 
-  // ---------------- shared PR loop ----------------
-  monitor [class="pulse", label="monitor every 3 min\npr-feedback-handler", shape=box3d,
-           fillcolor="#eef2ff", color="#4338ca"];
-  fetchc  [label="fetch reviews + inline comments"];
-  ci      [class="pulse", label="CI checks", shape=diamond, fillcolor="#fef9c3",
-           color="#a16207", width=0.95, height=0.75];
-  decide  [class="pulse", label="approved?", shape=diamond, fillcolor="#fef9c3",
-           color="#a16207", width=0.95, height=0.75];
-  fix     [label="pr-feedback-handler\nfix or reply", fillcolor="#fee2e2", color="#dc2626"];
-  commit  [label="commit\n(explicit paths only)"];
-  push    [label="git push origin <branch>"];
-  label_  [label="pr-labeler\nauto-label", fillcolor="#f3f4f6", color="#6b7280"];
+  // ---------------- the loop ----------------
+  monitor [class="pulse", label=<<b>Watch it</b><br/><font point-size="10" color="#3730A3">every 3 minutes</font>>,
+           shape=box3d, fillcolor="#EEF2FF", color="#4F46E5"];
+  fetchc  [label=<<b>Collect every comment</b><br/><font point-size="10" color="#6B7280">reviews + inline</font>>,
+           fillcolor="#F9FAFB", color="#9CA3AF"];
+  ci      [class="pulse", label=<<b>Checks green?</b>>, shape=diamond, fillcolor="#FEF9C3", color="#EAB308", penwidth=1.8];
+  decide  [class="pulse", label=<<b>Approved?</b>>, shape=diamond, fillcolor="#FEF9C3", color="#EAB308", penwidth=1.8];
+  fix     [class="pulse", label=<<b>Handle the feedback</b><br/><font point-size="10" color="#991B1B">fix it or answer it</font>>,
+           fillcolor="#FEE2E2", color="#EF4444"];
+  commit  [label=<<b>Commit</b><br/><font point-size="10" color="#991B1B">only the files you touched</font>>,
+           fillcolor="#FEE2E2", color="#EF4444"];
+  push    [label=<<b>Push</b><br/><font point-size="10" color="#991B1B">never force</font>>,
+           fillcolor="#FEE2E2", color="#EF4444"];
+  label_  [label=<<b>Label it right</b><br/><font point-size="10" color="#6B7280">pr-labeler</font>>,
+           fillcolor="#F3F4F6", color="#9CA3AF"];
 
-  merge   [class="pulse", label="pr-merger: verify + merge", shape=box3d,
-           fillcolor="#ecfdf5", color="#059669"];
-  cleanup [class="pulse", label="cleanup: worktree + branch"];
-  done    [class="pulse", label="Definition of Done\nissue linked AND merged",
-           shape=octagon, fillcolor="#d1fae5", color="#059669", fontcolor="#065f46"];
+  merge   [class="pulse", label=<<b>Merge safely</b><br/><font point-size="10" color="#047857">verified, never forced</font>>,
+           shape=box3d, fillcolor="#ECFDF5", color="#10B981"];
+  cleanup [class="pulse", label=<<b>Clean up</b><br/><font point-size="10" color="#047857">worktree + branch</font>>,
+           fillcolor="#ECFDF5", color="#10B981"];
+  done    [class="pulse", label=<<b>Done</b><br/><font point-size="10" color="#065F46">issue linked + merged</font>>,
+           shape=octagon, fillcolor="#D1FAE5", color="#10B981", fontcolor="#065F46", penwidth=2];
 
   // ---------------- edges ----------------
   main -> sync -> plan -> fanout;
-  fanout -> issue [style=dashed, color="#b45309"];
-  issue -> fanout [style=dashed, color="#b45309", constraint=false, label="resume"];
+  fanout -> issue [style=dashed, color="#EAB308"];
+  issue -> fanout [style=dashed, color="#EAB308", constraint=false, label=" resume "];
 
-  fanout -> a_wt [label="task A"];
-  fanout -> b_wt [label="task B"];
-  fanout -> c_wt [label="task C"];
+  fanout -> a_wt [label=" task A "];
+  fanout -> b_wt [label=" task B "];
+  fanout -> c_wt [label=" task C "];
 
   a_pr -> monitor;
   b_pr -> monitor;
   c_pr -> monitor;
-  a_pr -> label_ [style=dashed, color="#6b7280"];
-  label_ -> monitor [style=dashed, color="#6b7280"];
+  a_pr -> label_ [style=dashed, color="#9CA3AF"];
+  label_ -> monitor [style=dashed, color="#9CA3AF"];
 
   monitor -> fetchc -> decide;
   monitor -> ci;
-  ci -> fix [label="failing", color="#dc2626", fontcolor="#dc2626"];
-  decide -> fix [label="changes requested", color="#dc2626", fontcolor="#dc2626"];
+  ci -> fix [label=" failing ", color="#DC2626", fontcolor="#DC2626"];
+  decide -> fix [label=" changes requested ", color="#DC2626", fontcolor="#DC2626"];
   fix -> commit -> push;
-  push -> monitor [label="re-review", style=dashed, color="#dc2626", fontcolor="#dc2626"];
+  push -> monitor [label=" re-review ", style=dashed, color="#EF4444", fontcolor="#DC2626"];
 
-  decide -> merge [label="approved"];
+  decide -> merge [label=" approved "];
   merge -> cleanup -> done;
-  done -> main [label="next task", style=dashed, color="#059669", fontcolor="#059669",
+  done -> main [label=" next task ", style=dashed, color="#10B981", fontcolor="#047857",
                constraint=false];
 
-  // ---------------- explicit ranks ----------------
+  // ---------------- ranks ----------------
   { rank=same; main; }
   { rank=same; sync; }
   { rank=same; plan; }

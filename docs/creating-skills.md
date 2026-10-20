@@ -7,7 +7,7 @@ things. This page is about the second one.
 ## 1. Start from the template
 
 ```bash
-cp template/SKILL.md skills/my-skill/SKILL.md
+cp template/skill-template.md skills/my-skill/SKILL.md
 ```
 
 ## 2. The frontmatter is the trigger
