@@ -1,0 +1,149 @@
+---
+name: gh-prioritizer
+description: |
+  Use when auto-setting priorities for new PRs/Issues in GitHub Projects, batch 
+  updating priorities across project items, prioritizing PRs by size, labels, and 
+  impact, running priority audits, or coordinating priority levels across the 
+  full project board. Integrates with pr-labeler and issue-labeler for complete 
+  priority lifecycle management.
+---
+# GitHub Prioritizer
+
+Automatically sets and manages priorities for GitHub Projects V2 items based on intelligent detection rules.
+
+## Overview
+
+**Purpose**: Maintain consistent, accurate priority assignment across all GitHub Projects V2 items with zero manual intervention.
+
+## When to Use
+
+Use this skill when:
+
+- Auto-setting priorities for new PRs/Issues in GitHub Projects
+- Batch updating priorities across project items
+- Prioritizing PRs by size, labels, and impact
+- Running priority audits and consistency checks
+- Re-prioritizing based on new information
+- Coordinating priority levels across the full project board
+
+## Priority Levels
+
+| Level | Criteria | SLA |
+| --- | --- | --- |
+| P0-Critical | Production blockers, security vulnerabilities, hotfixes | 4 hours |
+| P1-High | User-facing bugs, major features, OKR deliverables | 1-2 days |
+| P2-Medium | Standard features, enhancements, non-blocking bugs | 1 week |
+| P3-Low | Documentation, testing, tech debt | As convenient |
+
+## Commands
+
+### 1. Auto-Detect and Set Priority
+
+```
+gh-prioritizer set <PR_OR_ISSUE_NUMBER> [--project <project-number>]
+```
+
+### 2. Batch Update Project
+
+```
+gh-prioritizer update-project <project-number>
+```
+
+### 3. Priority Audit
+
+```
+gh-prioritizer audit [--project <project-number>]
+```
+
+### 4. Manual Priority Override
+
+```
+gh-prioritizer set-manual <PR_OR_ISSUE_NUMBER> <PRIORITY>
+```
+
+### 5. Generate Priority Report
+
+```
+gh-prioritizer report [--project <project-number>]
+```
+
+## Detection Rules
+
+Priority detected based on:
+
+- **Branch patterns**: `hotfix/*` → P0
+- **Labels**: `security` → P0, `bug` + `user-facing` → P1
+- **File paths**: `**/payment/**` → P0, `**/settings/**` → P1
+- **Size**: > 500 lines → P1 consideration
+- **Override rules**: `DO-NOT-MERGE` → skip, `WIP` → P3
+
+See [Priority Detection Rules](references/priority-detection-rules.md) for complete algorithm.
+
+## Examples
+
+### Example 1: Set Priority for Hotfix
+
+```bash
+gh-prioritizer set 323 --project 1
+# Output: PR #323 set to P0-Critical (hotfix branch, affects payment system)
+```
+
+### Example 2: Batch Update
+
+```bash
+gh-prioritizer update-project 1
+# Output:
+#   P0-Critical: 1 item
+#   P1-High: 5 items
+#   P2-Medium: 4 items
+#   P3-Low: 1 item
+```
+
+### Example 3: Priority Report
+
+```bash
+gh-prioritizer report --project 1
+# Output:
+#   ╔══════════════════════════════════════════╗
+#   ║     Project Priority Distribution        ║
+#   ╠══════════════════════════════════════════╣
+#   ║  🔴 P0-Critical:  1 item  (9%)           ║
+#   ║  🟠 P1-High:      5 items (45%)          ║
+#   ║  🟡 P2-Medium:    4 items (36%)          ║
+#   ║  🟢 P3-Low:       1 item  (9%)           ║
+#   ╚══════════════════════════════════════════╝
+```
+
+## Best Practices
+
+1. **Always use highest priority that matches** - If multiple rules match, use most urgent
+2. **Re-evaluate on label changes** - Run `refresh` when new labels added
+3. **Hotfixes are always P0** - No exceptions for production hotfixes
+4. **Security issues are P0** - Security vulnerabilities get immediate priority
+5. **Large PRs need priority** - >500 lines = needs urgent review = P1
+
+## Integration
+
+**Called by**:
+
+- pr-manager (for priority-based orchestration)
+- pr-labeler (after labeling completes)
+- issue-labeler (for issue priority sync)
+- User (manual priority management)
+
+**Calls to**:
+
+- GitHub CLI (gh project, gh pr, gh issue)
+- GitHub GraphQL API (for Projects V2)
+
+**Coordinates with**:
+
+- pr-labeler (labels inform priority detection)
+- issue-labeler (sync priority across linked items)
+- pr-manager (priority drives PR queue order)
+
+## References
+
+- [Acceptance Criteria](references/acceptance-criteria.md) - Quality standards and ✅/❌ examples
+- [Best Practices](references/best-practices.md) - Priority management patterns
+- [Priority Detection Rules](references/priority-detection-rules.md) - Complete detection algorithm
