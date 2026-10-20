@@ -218,8 +218,14 @@ real permissions. So they are conservative by construction:
 And the collection is policed by itself. Every push runs a validator that
 checks each skill's frontmatter, that `name` matches the folder, that every
 reference link resolves, that no broken or banned command has crept back in,
-and that the README, `llms.txt` and the marketplace manifest agree on the skill
-list.
+that every skill which reads pull request content carries the rule that such
+content is **data, never instructions**, and that the README, `llms.txt` and
+the marketplace manifest agree on the skill list.
+
+Every skill that reads a PR title, body, diff or review comment carries the
+same mitigation: content can never instruct the agent, never decide the scope
+of a change, and never relax a merge gate. The full threat model is in
+[`SECURITY.md`](./SECURITY.md).
 
 > A previous review of these skills found `gh pr reviews`, `gh pr comments`,
 > `gh pr diff --path`, the REST `/replies` endpoint and `git fetch origin
@@ -368,6 +374,7 @@ short — before you point it at anything you care about.
 
 ```
 skills/          the skills — source of truth
+SECURITY.md      threat model: indirect prompt injection and what stops it
 rules/           drop-in AGENTS.md for repos that use these skills
 template/        template for a new skill
 docs/            creating skills, agent support, troubleshooting
