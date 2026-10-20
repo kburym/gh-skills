@@ -1,33 +1,37 @@
 // gh-skills — PR lifecycle flow
 // Render:  ./assets/build-diagram.sh   (dot + animated-SVG injection)
 // Source of truth: this file. The SVG in assets/ is generated from it.
+//
+// Laid out top-to-bottom so it stays readable inside a README column:
+// one spine down the middle, the parallel task tree as three side-by-side
+// columns, and the feedback loops as back-edges.
 digraph PR_FLOW {
-  rankdir=LR;
+  rankdir=TB;
   splines=polyline;
   bgcolor="#ffffff";
-  pad="0.4";
+  pad="0.3";
   nodesep="0.30";
-  ranksep="0.55";
+  ranksep="0.42";
 
   node [shape=box, style="rounded,filled", fontname="Helvetica,Arial,sans-serif",
         fontsize=10, fontcolor="#1f2328", color="#4f46e5", fillcolor="#eef2ff",
-        margin="0.13,0.07", height=0.32];
+        margin="0.12,0.06", height=0.30];
   edge [color="#4f46e5", fontname="Helvetica,Arial,sans-serif", fontsize=8,
-        fontcolor="#57606a", arrowsize=0.65];
+        fontcolor="#57606a", arrowsize=0.6];
 
-  // ---------------- spine: main -> ... -> done ----------------
-  main   [label="main", shape=circle, fixedsize=true, width=0.8, height=0.8,
+  // ---------------- spine ----------------
+  main   [label="main", shape=circle, fixedsize=true, width=0.72, height=0.72,
           fillcolor="#d1fae5", color="#059669", fontcolor="#065f46", penwidth=2];
   sync   [label="git fetch origin\nresolve default branch"];
-  plan   [class="pulse", label="pr-manager\nplan + prioritize\n(20+ PRs)", shape=box3d,
+  plan   [class="pulse", label="pr-manager: plan + prioritize\n(20+ PRs)", shape=box3d,
           fillcolor="#f5f3ff", color="#7c3aed"];
-  fanout [class="pulse", label="dispatch one\nsubagent per PR", shape=parallelogram,
+  fanout [class="pulse", label="dispatch one subagent per PR", shape=parallelogram,
           fillcolor="#f5f3ff", color="#7c3aed"];
   issue  [label="no issue?\ncreate + link\n(DoD gate)", fillcolor="#fef3c7", color="#b45309"];
 
-  // ---------------- parallel task tree ----------------
+  // ---------------- parallel task tree (three columns) ----------------
   subgraph cluster_tasks {
-    label="parallel sub-sessions (one per task)";
+    label="parallel sub-sessions — one per task";
     fontname="Helvetica,Arial,sans-serif"; fontsize=10; fontcolor="#57606a";
     color="#d0d7de"; style="rounded,dashed"; bgcolor="#fafbfc";
 
@@ -50,29 +54,28 @@ digraph PR_FLOW {
     b_wt -> b_impl -> b_test -> b_pr;
     c_wt -> c_impl -> c_test -> c_pr;
 
-    // align the three parallel chains inside the cluster
     { rank=same; a_wt; b_wt; c_wt; }
     { rank=same; a_impl; b_impl; c_impl; }
     { rank=same; a_test; b_test; c_test; }
     { rank=same; a_pr; b_pr; c_pr; }
   }
 
-  // ---------------- shared PR loop (cycles) ----------------
+  // ---------------- shared PR loop ----------------
   monitor [class="pulse", label="monitor every 3 min\npr-feedback-handler", shape=box3d,
            fillcolor="#eef2ff", color="#4338ca"];
-  fetchc  [label="fetch reviews +\ninline comments"];
+  fetchc  [label="fetch reviews + inline comments"];
   ci      [class="pulse", label="CI checks", shape=diamond, fillcolor="#fef9c3",
-           color="#a16207", width=1.0, height=0.8];
+           color="#a16207", width=0.95, height=0.75];
   decide  [class="pulse", label="approved?", shape=diamond, fillcolor="#fef9c3",
-           color="#a16207", width=1.0, height=0.8];
+           color="#a16207", width=0.95, height=0.75];
   fix     [label="pr-feedback-handler\nfix or reply", fillcolor="#fee2e2", color="#dc2626"];
   commit  [label="commit\n(explicit paths only)"];
-  push    [label="git push origin\n<branch>"];
+  push    [label="git push origin <branch>"];
   label_  [label="pr-labeler\nauto-label", fillcolor="#f3f4f6", color="#6b7280"];
 
-  merge   [class="pulse", label="pr-merger\nverify + merge", shape=box3d,
+  merge   [class="pulse", label="pr-merger: verify + merge", shape=box3d,
            fillcolor="#ecfdf5", color="#059669"];
-  cleanup [class="pulse", label="cleanup\nworktree + branch"];
+  cleanup [class="pulse", label="cleanup: worktree + branch"];
   done    [class="pulse", label="Definition of Done\nissue linked AND merged",
            shape=octagon, fillcolor="#d1fae5", color="#059669", fontcolor="#065f46"];
 
@@ -103,16 +106,16 @@ digraph PR_FLOW {
   done -> main [label="next task", style=dashed, color="#059669", fontcolor="#059669",
                constraint=false];
 
-  // ---------------- explicit ranks: the flow reads left -> right ----------------
+  // ---------------- explicit ranks ----------------
   { rank=same; main; }
   { rank=same; sync; }
   { rank=same; plan; }
   { rank=same; fanout; issue; }
-  { rank=same; label_; }
   { rank=same; monitor; }
   { rank=same; fetchc; ci; }
   { rank=same; decide; }
   { rank=same; merge; fix; }
   { rank=same; cleanup; commit; }
   { rank=same; done; push; }
+  { rank=same; label_; }
 }

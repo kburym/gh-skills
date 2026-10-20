@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-12-blue)](skills)
 [![Agent Skills](https://img.shields.io/badge/spec-agentskills.io-green)](https://agentskills.io/specification)
+[![skills.sh](https://skills.sh/b/odykyi/gh-skills)](https://skills.sh/odykyi/gh-skills)
 [![Stars](https://img.shields.io/github/stars/odykyi/gh-skills?style=flat-square&label=stars)](https://github.com/odykyi/gh-skills)
 
 **GitHub automation skills for AI coding agents** — the full pull request lifecycle, labelling, projects, and issue-to-PR flow.
@@ -68,10 +69,13 @@ If you have a budget of three API calls a day, keep it simple — this repo is f
 ## The loop
 
 <p align="center">
-  <img src="assets/pr-lifecycle.svg" alt="gh-skills: PR lifecycle flow — main → parallel tasks → PR → review loop → merge → main" width="100%">
+  <img src="assets/pr-lifecycle.svg" alt="gh-skills: PR lifecycle flow — main → parallel tasks → PR → review loop → merge → main" width="667">
 </p>
 
-The flow starts at `main`, fans out into one subagent per task (each in its own worktree), converges on a shared monitoring loop, and cycles back: **changes requested → fix → push → re-review**, and **failing CI → fix → push → re-review**. Only a merged PR closes the loop.
+The flow starts at `main` (top), fans out into one subagent per task (the three
+parallel columns, each in its own worktree), converges on a shared monitoring
+loop, and cycles back: **changes requested → fix → push → re-review**, and
+**failing CI → fix → push → re-review**. Only a merged PR closes the loop.
 
 - Source: [`assets/pr-lifecycle.dot`](./assets/pr-lifecycle.dot) (Graphviz)
 - Rebuild: `./assets/build-diagram.sh` (needs `graphviz`)
