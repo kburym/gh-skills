@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-12-blue)](skills)
 [![Agent Skills](https://img.shields.io/badge/spec-agentskills.io-green)](https://agentskills.io/specification)
-[![skills.sh](https://skills.sh/b/odykyi/gh-skills)](https://skills.sh/odykyi/gh-skills)
+[![skills.sh](https://img.shields.io/badge/skills.sh-12%20skills-7C3AED?style=for-the-badge&logo=github)](https://skills.sh/odykyi/gh-skills)
 [![installs](https://skills.sh/b/odykyi/gh-skills?label=installs)](https://skills.sh/odykyi/gh-skills)
 [![Stars](https://img.shields.io/github/stars/odykyi/gh-skills?style=flat-square&label=stars)](https://github.com/odykyi/gh-skills)
 [![Forks](https://img.shields.io/github/forks/odykyi/gh-skills?style=flat-square&label=forks)](https://github.com/odykyi/gh-skills/fork)
@@ -406,7 +406,7 @@ must be guarded.
 - Some skills reference companion issue-side skills (`issue-labeler`, `issue-reporter`, `issue-to-pr`). Those are not part of this collection.
 - `pr-manager` scales to 20+ concurrent PRs by dispatching parallel subagents (opencode parallel sub-sessions). It has been exercised that way; the per-PR workflow itself is the same one `pr-workflow-orchestrator` runs for a single PR.
 - `gh-pr-review-buttons` is derived from [`tdk-landscape/tdk-skills`](https://github.com/tdk-landscape/tdk-skills/tree/main/skills/tdk-pr-review-buttons) (MIT).
-- The `skills.sh` and `installs` badges at the top are live counters served by skills.sh. They render as a placeholder until skills.sh has indexed this repository — the count is the number of times the collection has been installed through `npx skills add`.
+- The `skills.sh` badge shows the skill count; the `installs` badge is the live counter skills.sh serves for `npx skills add` installs. The live counter renders once the collection has been installed, so it can read as a placeholder on a brand-new repo.
 
 ## Credits
 
