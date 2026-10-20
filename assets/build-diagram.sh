@@ -12,6 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DIAGRAMS=(
+  "assets/before-after.dot:assets/before-after.svg"
   "assets/pr-lifecycle.dot:assets/pr-lifecycle.svg"
   "assets/skill-calls.dot:assets/skill-calls.svg"
 )

@@ -1,0 +1,75 @@
+// gh-skills — before and after: the same queue, two ways to run it.
+// Render:  ./assets/build-diagram.sh   (dot + animated-SVG injection)
+// Source of truth: this file. The SVG in assets/ is generated from it.
+digraph BEFORE_AFTER {
+  rankdir=TB;
+  splines=polyline;
+  bgcolor="transparent";
+  pad="0.35";
+  nodesep="0.30";
+  ranksep="0.50";
+  fontname="Helvetica,Arial,sans-serif";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica,Arial,sans-serif",
+        fontsize=13, fontcolor="#111827", color="#4F46E5", fillcolor="#EEF2FF",
+        penwidth=1.6, margin="0.16,0.10"];
+  edge [color="#9CA3AF", fontname="Helvetica,Arial,sans-serif", fontsize=11,
+        fontcolor="#6B7280", arrowsize=0.7, penwidth=1.3];
+
+  // ================= BEFORE =================
+  subgraph cluster_before {
+    label=<<b>Without gh-skills</b><br/><font point-size="11" color="#991B1B">the queue rots, and you are the bottleneck</font>>;
+    fontname="Helvetica,Arial,sans-serif"; fontsize=14; fontcolor="#991B1B";
+    color="#FCA5A5"; style="rounded,dashed"; penwidth=1.8; bgcolor="#FEF2F2";
+
+    b1 [label=<<b>PR #12</b> &nbsp;opened without an issue<font point-size="10" color="#991B1B"> — nobody knows what it is for</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+    b2 [label=<<b>PR #19</b> &nbsp;CI has been red for three days<font point-size="10" color="#991B1B"> — the author moved on</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+    b3 [label=<<b>PR #23</b> &nbsp;four review comments, none answered<font point-size="10" color="#991B1B"> — the reviewer gave up</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+    b4 [label=<<b>PR #31</b> &nbsp;branch drifted forty commits<font point-size="10" color="#991B1B"> — the merge is a conflict</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+    b5 [label=<<b>PR #37</b> &nbsp;no labels, no size, no priority<font point-size="10" color="#991B1B"> — invisible on the board</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+    b6 [label=<<b>PR #41</b> &nbsp;worktree left behind<font point-size="10" color="#991B1B"> — and the branch too</font>>,
+        fillcolor="#FFFFFF", color="#F87171"];
+
+    b_verdict [label=<<b>Nothing ships.</b><br/><font point-size="11" color="#991B1B">You spend your week on paperwork instead of code.</font>>,
+               shape=octagon, fillcolor="#FEE2E2", color="#EF4444", fontcolor="#991B1B", penwidth=2];
+
+    b1 -> b2 -> b3 -> b4 -> b5 -> b6 -> b_verdict [style=invis];
+  }
+
+  // ================= AFTER =================
+  subgraph cluster_after {
+    label=<<b>With gh-skills</b><br/><font point-size="11" color="#065F46">one line, run in parallel, until every PR is merged</font>>;
+    fontname="Helvetica,Arial,sans-serif"; fontsize=14; fontcolor="#065F46";
+    color="#6EE7B7"; style="rounded,dashed"; penwidth=1.8; bgcolor="#F0FDF4";
+
+    a1 [label=<<b>30 open PRs</b><font point-size="10" color="#047857"> — the queue, untouched</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+    a2 [label=<<b>One agent per PR</b><font point-size="10" color="#047857"> — own worktree, own branch, no collisions</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+    a3 [label=<<b>Every step checked</b><font point-size="10" color="#047857"> — issue linked, CI green, reviewed</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+    a4 [label=<<b>Every comment handled</b><font point-size="10" color="#047857"> — fixed, or answered with a reason</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+    a5 [label=<<b>Merged safely</b><font point-size="10" color="#047857"> — never forced, never with red CI</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+    a6 [label=<<b>Cleaned up</b><font point-size="10" color="#047857"> — worktree and branch gone</font>>,
+        fillcolor="#FFFFFF", color="#34D399"];
+
+    a_verdict [label=<<b>Everything ships.</b><br/><font point-size="11" color="#065F46">You review the decisions, not the paperwork.</font>>,
+               shape=octagon, fillcolor="#D1FAE5", color="#10B981", fontcolor="#065F46", penwidth=2];
+
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a_verdict;
+  }
+
+  // ================= THE SWITCH =================
+  switch [label=<<b>install 12 skills</b><br/><font point-size="10" color="#6D28D9">npx skills add odykyi/gh-skills</font>>,
+          shape=parallelogram, fillcolor="#F5F3FF", color="#7C3AED", penwidth=2];
+
+  b_verdict -> switch [style=dashed, color="#7C3AED", fontcolor="#6D28D9", label=" switch on ", constraint=false];
+  switch -> a1 [style=dashed, color="#7C3AED", fontcolor="#6D28D9", constraint=false];
+}
