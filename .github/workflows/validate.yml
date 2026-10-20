@@ -31,9 +31,9 @@ jobs:
           if command -v dot >/dev/null 2>&1; then
             sudo apt-get update -qq && sudo apt-get install -y -qq graphviz
             ./assets/build-diagram.sh
-            if ! git diff --quiet -- assets/pr-lifecycle.svg; then
-              echo "::error::assets/pr-lifecycle.svg is out of date — run ./assets/build-diagram.sh"
-              git diff --stat -- assets/pr-lifecycle.svg
+            if ! git diff --quiet -- assets/; then
+              echo "::error::the rendered diagrams are out of date — run ./assets/build-diagram.sh"
+              git diff --stat -- assets/
               exit 1
             fi
           else

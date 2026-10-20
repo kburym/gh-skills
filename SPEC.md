@@ -31,7 +31,7 @@ skills/
 rules/AGENTS.github.md                # drop-in rules for a repo that uses these skills
 template/SKILL.md                     # starting point for a new skill
 docs/                                 # creating skills, agent support, troubleshooting
-assets/                               # the animated flow diagram (Graphviz source + SVG)
+assets/                               # the animated diagrams (Graphviz source + SVG)
 scripts/validate-skills.mjs           # the linter CI runs
 .claude-plugin/marketplace.json       # Claude Code plugin marketplace
 install.sh                            # symlink installer for any agent

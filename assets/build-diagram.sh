@@ -1,31 +1,34 @@
 #!/usr/bin/env bash
-# Build the animated PR-lifecycle diagram.
+# Build the animated diagrams.
 #
-#   dot -Tsvg assets/pr-lifecycle.dot -o assets/pr-lifecycle.svg
+#   ./assets/build-diagram.sh
 #
-# Graphviz has no animation support, so this script renders the graph and then
-# injects a small <style> block that animates the edges (marching dashes) and
-# the orchestrator nodes (pulse). The result is a self-contained, animated SVG
-# that renders in any browser and still works as a static image.
+# Graphviz has no animation support, so this script renders each graph and
+# then injects a small <style> block that animates the edges (marching
+# dashes) and the orchestrator nodes (pulse). The result is a self-contained,
+# animated SVG that renders in any browser and still works as a static image.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DOT_SRC="assets/pr-lifecycle.dot"
-SVG_OUT="assets/pr-lifecycle.svg"
+DIAGRAMS=(
+  "assets/pr-lifecycle.dot:assets/pr-lifecycle.svg"
+  "assets/skill-calls.dot:assets/skill-calls.svg"
+)
 
 command -v dot >/dev/null 2>&1 || {
   echo "error: graphviz 'dot' not found — install graphviz and retry" >&2
   exit 1
 }
 
-dot -Tsvg "$DOT_SRC" -o "$SVG_OUT"
+for pair in "${DIAGRAMS[@]}"; do
+  src="${pair%%:*}"
+  out="${pair##*:}"
+  dot -Tsvg "$src" -o "$out"
+done
 
-python3 - "$SVG_OUT" <<'PY'
+python3 - "${DIAGRAMS[@]}" <<'PY'
 import sys
-
-path = sys.argv[1]
-svg = open(path, encoding="utf-8").read()
 
 style = """
   <style type="text/css">
@@ -55,9 +58,11 @@ style = """
   </style>
 """
 
-if "<style" not in svg:
-    svg = svg.replace("</svg>", style + "</svg>")
-
-open(path, "w", encoding="utf-8").write(svg)
-print(f"wrote {path}")
+for pair in sys.argv[1:]:
+    src, out = pair.split(":")
+    svg = open(out, encoding="utf-8").read()
+    if "<style" not in svg:
+        svg = svg.replace("</svg>", style + "</svg>")
+        open(out, "w", encoding="utf-8").write(svg)
+    print(f"wrote {out}")
 PY

@@ -66,19 +66,84 @@ If you have a budget of three API calls a day, keep it simple — this repo is f
 
 ---
 
-## The loop
+## The factory line
+
+A pull request is a production line. `pr-workflow-orchestrator` is the line
+manager, every skill is a station, and the numbers below are how long a
+station usually takes.
+
+<details>
+<summary><strong>Show the skill-by-skill call map</strong> (animated)</summary>
+
+<p align="center">
+  <img src="assets/skill-calls.svg" alt="gh-skills: which skill calls which, and how long each takes" width="699">
+</p>
+
+</details>
+
+`pr-manager` runs the same line once per PR, in parallel — 20+ lanes at a time.
+
+<details>
+<summary><strong>Show the PR lifecycle flow</strong> (animated)</summary>
 
 <p align="center">
   <img src="assets/pr-lifecycle.svg" alt="gh-skills: PR lifecycle flow — main → parallel tasks → PR → review loop → merge → main" width="667">
 </p>
 
-The flow starts at `main` (top), fans out into one subagent per task (the three
-parallel columns, each in its own worktree), converges on a shared monitoring
-loop, and cycles back: **changes requested → fix → push → re-review**, and
-**failing CI → fix → push → re-review**. Only a merged PR closes the loop.
+</details>
 
-- Source: [`assets/pr-lifecycle.dot`](./assets/pr-lifecycle.dot) (Graphviz)
+The lifecycle starts at `main` (top), fans out into one subagent per task (the
+three parallel columns, each in its own worktree), converges on a shared
+monitoring loop, and cycles back: **changes requested → fix → push → re-review**,
+and **failing CI → fix → push → re-review**. Only a merged PR closes the loop.
+
+- Sources: [`assets/skill-calls.dot`](./assets/skill-calls.dot) and [`assets/pr-lifecycle.dot`](./assets/pr-lifecycle.dot) (Graphviz)
 - Rebuild: `./assets/build-diagram.sh` (needs `graphviz`)
+
+---
+
+## Use cases
+
+**You have stuck PRs.** Twenty PRs open, nobody reviewing, three of them
+rotting for a week. Point the agent at the queue and let it run the line:
+every PR gets picked up, classified, reviewed, and either fixed or answered.
+Nothing waits for you to notice it.
+
+```
+@pr-workflow-orchestrator Handle feedback for PR #277, #281 and #294.
+Pick up each one, fix what is real, reply to what is not, and report what
+you could not close and why.
+```
+
+**A contributor went quiet mid-review.** Three comments unanswered, branch
+drifted, CI red. `pr-feedback-handler` classifies each comment as *fix* or
+*reply*, never guesses at intent, and re-runs the checks.
+
+**You are on holiday and the queue must not stop.** The orchestrator keeps
+watching: it monitors every 3 minutes, answers reviews, and merges what is
+approved and green. The Definition of Done is explicit — issue linked **and**
+PR merged — so nothing is quietly left open.
+
+**Twenty tasks need to land this week.** `pr-manager` gives each one its own
+worktree and its own subagent, then aggregates the results into one summary.
+No two tasks share a working directory, so they cannot collide.
+
+**Your labels are a mess.** `pr-labeler` re-labels the queue by branch name,
+changed files and diff size, and reports what it found missing — with a
+`--dry-run` first, so nothing changes until you say so.
+
+**Your project board is fiction.** `gh-prioritizer` scores every item —
+missing issue link first, then age, category, size and blockers — and tells
+you which PR is actually the most urgent.
+
+**You want AI reviews on every PR.** `gh-pr-review-buttons` adds
+"Review this PR in Grok / Claude / Codex" badges to every PR description. One
+script, one workflow, no API key, nothing running in CI that shouldn't be.
+
+**You are onboarding a new maintainer.** Point them at `rules/AGENTS.github.md`
+— the drop-in rules that tell the agent how *your* repository does pull
+requests, so the skills do not have to guess your conventions.
+
 
 ---
 
