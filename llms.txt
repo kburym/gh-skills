@@ -1,0 +1,55 @@
+# gh-skills
+
+> Agent Skills (`SKILL.md`) that run the GitHub pull request lifecycle for AI coding agents: worktrees, issue-linked PRs, code review, feedback loops, safe merges, labels, GitHub Projects. Built for maintainers with a queue of PRs, not for a one-off contribution.
+
+One maintained copy of each skill lives under `skills/`. The Claude Code plugin, the `npx skills` package and the `.agents/skills/` symlinks all point at it.
+
+## How the pieces fit
+
+- `pr-workflow-orchestrator` is the entry point: one PR, start to finish, never left unattended.
+- `pr-manager` is the same loop at scale: 20+ PRs, one subagent each.
+- `pr-worktree`, `pr-opener`, `pr-reviewer`, `pr-feedback-handler`, `pr-commenter`, `pr-labeler`, `pr-merger` are the individual steps the orchestrator dispatches.
+- `gh-project-orchestrator`, `gh-prioritizer` keep GitHub Projects and priorities aligned with reality.
+- `gh-pr-review-buttons` appends "Review this PR in Grok / Claude / Codex" badges to PR descriptions.
+
+## Definition of Done
+
+A task is done when the issue is linked **and** the PR is merged. Opening a PR is not completion. No PR is left unattended.
+
+## Skills
+
+- [pr-workflow-orchestrator](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-workflow-orchestrator/SKILL.md): the complete PR workflow for a single PR — worktree, open, review, feedback, merge, cleanup
+- [pr-manager](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-manager/SKILL.md): orchestrate 20+ PRs in parallel with Definition of Done enforcement
+- [pr-worktree](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-worktree/SKILL.md): isolated git worktrees per task, without ever checking out in the main directory
+- [pr-opener](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-opener/SKILL.md): open a PR with a linked issue, a real body, and a push
+- [pr-reviewer](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-reviewer/SKILL.md): structured code review posted as review comments
+- [pr-feedback-handler](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-feedback-handler/SKILL.md): classify each incoming comment as fix or reply, never guess
+- [pr-commenter](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-commenter/SKILL.md): general PR comments, line-level review comments, thread replies
+- [pr-labeler](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-labeler/SKILL.md): label PRs by branch, changed files, size and type
+- [pr-merger](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/pr-merger/SKILL.md): merge approved PRs safely, then clean up the worktree and branch
+- [gh-project-orchestrator](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/gh-project-orchestrator/SKILL.md): create and manage GitHub Projects v2, link epics, issues and PRs
+- [gh-prioritizer](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/gh-prioritizer/SKILL.md): set and audit priorities across a project board
+- [gh-pr-review-buttons](https://raw.githubusercontent.com/odykyi/gh-skills/main/skills/gh-pr-review-buttons/SKILL.md): add Grok / Claude / Codex review badges to PR descriptions
+
+## Install
+
+```bash
+npx skills add odykyi/gh-skills
+```
+
+Or symlink into an agent directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/odykyi/gh-skills/main/install.sh | sh -s -- --agent claude --project
+```
+
+Or register the repository as a Claude Code plugin marketplace:
+
+```
+/plugin marketplace add odykyi/gh-skills
+/plugin install gh-skills@gh-skills
+```
+
+## Contract
+
+Every skill is repository-agnostic. No force push, no `gh pr merge --admin`, no `git branch -D`, no PR without a linked issue. `scripts/validate-skills.mjs` enforces this in CI.

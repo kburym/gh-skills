@@ -121,23 +121,69 @@ In short: these skills turn "the agent touched GitHub" into "the agent ran the w
 
 ## Install
 
-```bash
-git clone --depth 1 https://github.com/odykyi/gh-skills.git /tmp/gh-skills
-cp -R /tmp/gh-skills/skills/* ~/.claude/skills/
+**Claude Code plugin** — this repository is a plugin marketplace:
+
+```
+/plugin marketplace add odykyi/gh-skills
+/plugin install gh-skills@gh-skills
 ```
 
-Or with the skills CLI:
+**skills CLI** — installs into whichever agent it detects:
 
 ```bash
 npx skills add odykyi/gh-skills
 ```
 
-For Claude Code plugin installs, point the marketplace at this repo — each folder under `skills/` is a valid skill package.
+**Any agent** — symlink the skills into an agent directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/odykyi/gh-skills/main/install.sh | sh -s -- --agent claude --project
+```
+
+`install.sh` supports `--agent claude|codex|opencode|cursor|agents` and
+`--global|--project`. It only creates symlinks, never copies markdown, never
+uses `sudo`, and cleans up its own stale links on re-run.
+
+**Manual**:
+
+```bash
+git clone --depth 1 https://github.com/odykyi/gh-skills.git /tmp/gh-skills
+cp -R /tmp/gh-skills/skills/* ~/.claude/skills/
+```
+
+Which agent looks where: [`docs/agents.md`](./docs/agents.md).
+Something not working: [`docs/troubleshooting.md`](./docs/troubleshooting.md).
 
 ## Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
 - Repository write access for anything that creates, labels, comments on, or merges PRs
+- `git` 2.17+ (for `git worktree remove`, `lock`, `unlock`)
+
+## Repository layout
+
+```
+skills/          the skills — source of truth
+rules/           drop-in AGENTS.md for repos that use these skills
+template/        template for a new skill
+docs/            creating skills, agent support, troubleshooting
+assets/          the animated flow diagram (Graphviz source + SVG)
+scripts/         the linter CI runs
+install.sh       symlink installer for any agent
+llms.txt         machine-readable index
+SPEC.md          the contract this collection makes
+AGENTS.md        rules for agents contributing to this repo
+```
+
+`skills/` is the single source of truth. The plugin, the `npx skills` package
+and the `.agents/skills` symlinks all point at it — nothing is duplicated.
+
+Every push runs `node scripts/validate-skills.mjs`, which checks the
+frontmatter of every skill, that `name` matches the folder, that every
+`references/` link resolves, that no banned or broken command has crept back
+in, and that the README, `llms.txt` and the marketplace manifest all agree on
+the skill list.
+
 
 ---
 
@@ -191,6 +237,15 @@ worktree and the local branch.
 - `pr-manager` scales to 20+ concurrent PRs by dispatching parallel subagents (opencode parallel sub-sessions). It has been exercised that way; the per-PR workflow itself is the same one `pr-workflow-orchestrator` runs for a single PR.
 - `gh-pr-review-buttons` is derived from [`tdk-landscape/tdk-skills`](https://github.com/tdk-landscape/tdk-skills/tree/main/skills/tdk-pr-review-buttons) (MIT).
 
+## Contributing
+
+New skills are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) and
+[`docs/creating-skills.md`](./docs/creating-skills.md). The bar: every command
+in a skill must have been run against the real CLI, and every destructive step
+must be guarded.
+
+The contract this collection makes is written down in [`SPEC.md`](./SPEC.md).
+
 ## Credits
 
-- `gh-pr-review-buttons` — original by [@tdk-landscape](https://github.com/tdk-landscape) / [tdk-cli-core](https://github.com/tdk-landscape/tdk-cli-core), MIT licensed.
+- `gh-pr-review-buttons` — original by [@tdk-landscape](https://github.com/tdk-landscape) / [tdk-cli-core](https://github.com/tdk-landscape/tdk-cli-core), MIT licensed. See [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).

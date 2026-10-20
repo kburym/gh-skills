@@ -1,0 +1,26 @@
+{
+  "name": "gh-skills",
+  "version": "1.0.0",
+  "description": "GitHub pull request automation skills for AI coding agents",
+  "homepage": "https://github.com/odykyi/gh-skills",
+  "license": "MIT",
+  "scripts": {
+    "validate": "node scripts/validate-skills.mjs",
+    "diagram": "./assets/build-diagram.sh",
+    "test": "node scripts/validate-skills.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "skills",
+    "assets",
+    "rules",
+    "template",
+    "docs",
+    "install.sh",
+    "llms.txt",
+    "SPEC.md",
+    "AGENTS.md"
+  ]
+}

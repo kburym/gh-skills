@@ -1,0 +1,53 @@
+name: Validate skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-skills-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate skill collection
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Validate skills
+        run: node scripts/validate-skills.mjs
+
+      - name: Check the flow diagram is in sync with its source
+        run: |
+          if command -v dot >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq graphviz
+            ./assets/build-diagram.sh
+            if ! git diff --quiet -- assets/pr-lifecycle.svg; then
+              echo "::error::assets/pr-lifecycle.svg is out of date — run ./assets/build-diagram.sh"
+              git diff --stat -- assets/pr-lifecycle.svg
+              exit 1
+            fi
+          else
+            echo "graphviz not available — skipping diagram check"
+          fi
+
+      - name: Check every skill is listed in llms.txt
+        run: |
+          missing=0
+          for dir in skills/*/; do
+            name=$(basename "$dir")
+            if ! grep -q "skills/$name/SKILL.md" llms.txt; then
+              echo "::error::llms.txt does not list $name"
+              missing=1
+            fi
+          done
+          exit $missing

@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# macOS
+.DS_Store
+
+# git worktrees created by the skills in this repo
+.worktrees/

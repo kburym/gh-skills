@@ -1,0 +1,19 @@
+{
+  "name": "gh-skills",
+  "description": "Autonomous pull request lifecycle for AI coding agents: worktrees, issue-linked PRs, review, feedback loops, safe merges, labels and GitHub Projects",
+  "version": "1.0.0",
+  "author": {
+    "name": "odykyi"
+  },
+  "homepage": "https://github.com/odykyi/gh-skills",
+  "license": "MIT",
+  "keywords": [
+    "github",
+    "pull-request",
+    "code-review",
+    "git-worktree",
+    "maintainer",
+    "automation",
+    "agent-skills"
+  ]
+}

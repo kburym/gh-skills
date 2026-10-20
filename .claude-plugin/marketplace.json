@@ -1,0 +1,32 @@
+{
+  "name": "gh-skills",
+  "owner": {
+    "name": "odykyi"
+  },
+  "metadata": {
+    "description": "GitHub pull request automation skills for AI coding agents",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "gh-skills",
+      "description": "Autonomous pull request lifecycle for AI coding agents: worktrees, issue-linked PRs, review, feedback loops, safe merges, labels and GitHub Projects",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/gh-pr-review-buttons",
+        "./skills/gh-prioritizer",
+        "./skills/gh-project-orchestrator",
+        "./skills/pr-commenter",
+        "./skills/pr-feedback-handler",
+        "./skills/pr-labeler",
+        "./skills/pr-manager",
+        "./skills/pr-merger",
+        "./skills/pr-opener",
+        "./skills/pr-reviewer",
+        "./skills/pr-workflow-orchestrator",
+        "./skills/pr-worktree"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/odykyi/gh-skills/discussions
+    about: Ask how to use a skill, or how to adapt the collection to your repo.
