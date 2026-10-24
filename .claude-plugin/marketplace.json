@@ -22,6 +22,7 @@
         "./skills/pr-labeler",
         "./skills/pr-manager",
         "./skills/pr-merger",
+        "./skills/pr-queue-digest",
         "./skills/pr-opener",
         "./skills/pr-reviewer",
         "./skills/pr-workflow-orchestrator",
