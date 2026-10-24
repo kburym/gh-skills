@@ -29,6 +29,8 @@ digraph SKILL_FACTORY {
         fillcolor="#ECFDF5", color="#059669"];
   prio [label=<<b>gh-prioritizer</b><br/><font point-size="10" color="#047857">what is urgent · ~10s</font>>,
         fillcolor="#ECFDF5", color="#059669"];
+  digest [label=<<b>pr-queue-digest</b><br/><font point-size="10" color="#047857">read-only queue view · ~5s</font>>,
+        fillcolor="#ECFDF5", color="#059669"];
   btns [label=<<b>gh-pr-review-buttons</b><br/><font point-size="10" color="#4B5563">AI review badges · one-time</font>>,
         fillcolor="#F3F4F6", color="#9CA3AF"];
 
@@ -85,11 +87,12 @@ digraph SKILL_FACTORY {
   orch -> wt [label=" dispatch "];
   proj -> queue [style=dashed, color="#10B981", fontcolor="#047857"];
   prio -> queue [style=dashed, color="#10B981", fontcolor="#047857"];
+  digest -> queue [style=dashed, color="#10B981", fontcolor="#047857"];
   btns -> open [style=dashed, color="#9CA3AF", fontcolor="#6B7280", label=" badges on the PR "];
   done -> promise [style=invis];
 
   // ---------------- ranks ----------------
-  { rank=same; queue; proj; prio; btns; }
+  { rank=same; queue; proj; prio; digest; btns; }
   { rank=same; mgr; }
   { rank=same; orch; }
   { rank=same; promise; }
